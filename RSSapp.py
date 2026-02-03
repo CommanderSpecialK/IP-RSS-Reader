@@ -9,7 +9,7 @@ from streamlit_gsheets import GSheetsConnection
 st.set_page_config(page_title="IP RSS FastManager", layout="wide")
 
 # Google Sheets Verbindung initialisieren
-conn = st.connection("gsheets", type=GSheetsConnection)
+conn = st.connection("gsheets", type=GSheetsConnection, spreadsheet=st.secrets["gsheets_url"])
 
 def check_password():
     if st.session_state.get("password_correct", False): return True
