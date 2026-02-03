@@ -19,6 +19,7 @@ def fetch_feed(row):
         entries = []
         for e in feed.entries:
             pub = e.get('published_parsed')
+            # Prüfen, ob der Artikel jünger als 24h ist
             is_new = (now - datetime(*pub[:6])) < timedelta(hours=24) if pub else False
             entries.append({
                 'title': e.get('title', 'Kein Titel'),
@@ -35,7 +36,7 @@ def fetch_feed(row):
 
 def update_cache():
     if not REPO or not TOKEN:
-        print("Fehler: Secrets fehlen!")
+        print("Fehler: Secrets REPO_NAME oder GH_TOKEN fehlen!")
         return
 
     # 1. Feeds laden
@@ -45,7 +46,7 @@ def update_cache():
         print(f"CSV Fehler: {e}")
         return
 
-    # 2. Parallel abrufen
+    # 2. Parallel abrufen (Turbo-Modus)
     all_entries = []
     with ThreadPoolExecutor(max_workers=5) as executor:
         results = list(executor.map(fetch_feed, [row for _, row in df_feeds.iterrows()]))
@@ -55,26 +56,34 @@ def update_cache():
     # 3. Upload zu GitHub
     content = json.dumps(all_entries)
     clean_repo = REPO.strip()
-    url = f"https://api.github.com{clean_repo}/contents/news_cache.json"
-    headers = {"Authorization": f"token {TOKEN}", "Accept": "application/vnd.github.v3+json"}
     
-    # SHA für Update holen
+    # KORRIGIERTE URL: /repos/ muss vor dem Namen stehen!
+    url = f"https://api.github.com/{clean_repo}/contents/news_cache.json"
+    
+    headers = {
+        "Authorization": f"token {TOKEN}", 
+        "Accept": "application/vnd.github.v3+json"
+    }
+    
+    # Vorherigen SHA-Key holen, falls die Datei schon existiert (für das Update nötig)
     resp = requests.get(url, headers=headers)
     sha = resp.json().get("sha") if resp.status_code == 200 else None
     
     payload = {
         "message": "Daily News Cache Update",
-        "content": base64.b64encode(content.encode()).decode(),
-        "sha": sha
-    } if sha else {
-        "message": "Daily News Cache Update",
         "content": base64.b64encode(content.encode()).decode()
     }
+    if sha:
+        payload["sha"] = sha
     
+    # Datei hochladen/aktualisieren
     r = requests.put(url, json=payload, headers=headers)
     print(f"GitHub API Status: {r.status_code}")
+    
     if r.status_code not in [200, 201]:
         print(f"Details: {r.text}")
+    else:
+        print("Erfolgreich: news_cache.json wurde aktualisiert!")
 
 if __name__ == "__main__":
     update_cache()
