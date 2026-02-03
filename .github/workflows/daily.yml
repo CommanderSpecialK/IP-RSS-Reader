@@ -18,7 +18,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          pip install pandas feedparser requests
+          pip install pandas feedparser requests lxml
 
       - name: Run Update Script
         env:
