@@ -1,4 +1,4 @@
 streamlit
 pandas
 feedparser
-st-files-connection
+requests
