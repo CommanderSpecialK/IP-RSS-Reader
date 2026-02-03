@@ -72,15 +72,21 @@ if check_password():
 
     # 6. ANZEIGE
     st.header(f"Beiträge: {view}")
+
     for entry in filtered_news:
-        item_id = entry.link
-        col_text, col_fav, col_del = st.columns([0.8, 0.1, 0.1])
-        
-        with col_text:
-            is_fav = "⭐ " if item_id in st.session_state.wichtige_artikel else ""
-            st.markdown(f"{is_fav}**[{entry.title}]({entry.link})**")
-            st.caption(f"{entry.source_name} | {entry.get('published', 'N/A')}")
-        
+    # Sicherstellen, dass Titel und Link existieren (Fallback-Werte)
+    title = entry.get('title', 'Kein Titel vorhanden')
+    link = entry.get('link', '#')
+    item_id = link 
+    
+    col_text, col_fav, col_del = st.columns([0.8, 0.1, 0.1])
+    
+    with col_text:
+        is_fav = "⭐ " if item_id in st.session_state.wichtige_artikel else ""
+        # Nutze die sicher extrahierten Variablen title und link
+        st.markdown(f"{is_fav}**[{title}]({link})**")
+        st.caption(f"{entry.get('source_name', 'Unbekannt')} | {entry.get('published', 'Kein Datum')}")
+
         with col_fav:
             if st.button("⭐", key=f"fav_{item_id}"):
                 if item_id in st.session_state.wichtige_artikel:
