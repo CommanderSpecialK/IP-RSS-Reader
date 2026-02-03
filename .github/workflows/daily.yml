@@ -1,7 +1,7 @@
 name: Refresh News Cache
 on:
   schedule:
-    - cron: '0 5 * * *' # 05:00 UTC entspricht ca. 06:00 MEZ
+    - cron: '0 6 * * *' # 05:00 UTC entspricht ca. 06:00 MEZ
   workflow_dispatch: # Erlaubt manuellen Start zum Testen
 
 jobs:
