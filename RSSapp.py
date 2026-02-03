@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import feedparser
+import urllib.request
 import re
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor
@@ -26,32 +27,36 @@ if check_password():
     # 2. PERSISTENTE DATEN LADEN
 
 
+    
     if 'wichtige_artikel' not in st.session_state:
         try:
-            # URL aus Secrets laden
-            raw_url = str(st.secrets["gsheets_url"]).strip()
+            # 1. Absolut radikale Reinigung der URL aus den Secrets
+            # Entfernt ALLES außer Buchstaben, Zahlen und die nötigsten URL-Zeichen
+            raw_url = str(st.secrets["gsheets_url"])
+            clean_url = "".join(re.findall(r"[a-zA-Z0-9-.:/_?=&]", raw_url))
             
-            # Sicherstellen, dass die ID extrahiert wird (sucht nach der langen Zeichenfolge)
-            # Die ID ist bei dir: 1KllMIdRunx5n4ntlnEi5f7R2KO9Cumj9L-8YQ_k8al4
-            found_id = re.search(r"([a-zA-Z0-9-_]{30,})", raw_url)
+            # 2. ID extrahieren
+            sheet_id = "1KllMIdRunx5n4ntlnEi5f7R2KO9Cumj9L-8YQ_k8al4" # Deine ID
             
-            if found_id:
-                sheet_id = found_id.group(1)
-                # Konstruktion der korrekten Google-Abfrage
-                url_w = f"https://docs.google.com{sheet_id}/gviz/tq?tqx=out:csv&sheet=wichtig"
-                url_g = f"https://docs.google.com{sheet_id}/gviz/tq?tqx=out:csv&sheet=geloescht"
-                
-                df_w = pd.read_csv(url_w)
-                df_g = pd.read_csv(url_g)
-                
-                st.session_state.wichtige_artikel = set(df_w['link'].dropna().astype(str).tolist()) if 'link' in df_w.columns else set()
-                st.session_state.geloeschte_artikel = set(df_g['link'].dropna().astype(str).tolist()) if 'link' in df_g.columns else set()
-            else:
-                st.error("Gültige ID im Secret nicht gefunden!")
-                
+            # 3. Direkte Export-Links
+            url_w = f"https://docs.google.com{sheet_id}/gviz/tq?tqx=out:csv&sheet=wichtig"
+            url_g = f"https://docs.google.com{sheet_id}/gviz/tq?tqx=out:csv&sheet=geloescht"
+            
+            # 4. Laden mit Pandas (User-Agent hilft gegen Blockaden)
+            storage_options = {'User-Agent': 'Mozilla/5.0'}
+            
+            df_w = pd.read_csv(url_w, storage_options=storage_options)
+            df_g = pd.read_csv(url_g, storage_options=storage_options)
+            
+            # 5. In Session State schreiben
+            st.session_state.wichtige_artikel = set(df_w['link'].dropna().astype(str).tolist()) if 'link' in df_w.columns else set()
+            st.session_state.geloeschte_artikel = set(df_g['link'].dropna().astype(str).tolist()) if 'link' in df_g.columns else set()
+            
         except Exception as e:
             st.error(f"Verbindungsfehler: {e}")
+            st.info("Prüfe, ob in den Streamlit-Secrets 'gsheets_url' korrekt geschrieben ist.")
             st.session_state.wichtige_artikel, st.session_state.geloeschte_artikel = set(), set()
+
 
 
     # 3. PARALLELES LADEN DER FEEDS (Der Turbo)
