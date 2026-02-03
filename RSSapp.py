@@ -25,34 +25,35 @@ def check_password():
 if check_password():
     # 2. PERSISTENTE DATEN LADEN
 
+
     if 'wichtige_artikel' not in st.session_state:
         try:
-            # 1. URL laden und extrem säubern
-            raw_url = str(st.secrets["gsheets_url"]).strip()
+            # 1. URL laden und ALLES löschen, was kein Buchstabe/Sonderzeichen einer URL ist
+            # Das entfernt unsichtbare BOM-Zeichen oder Excel-Formatierungen
+            raw_url = "".join(char for char in str(st.secrets["gsheets_url"]) if char.isprintable())
+            raw_url = raw_url.strip().replace('"', '').replace("'", "")
             
-            # 2. Nur die ID extrahieren (Regex findet die lange Kette zwischen /d/ und /)
+            # 2. Die ID finden
             found_id = re.search(r"/d/([a-zA-Z0-9-_]+)", raw_url)
             if not found_id:
-                st.error("Keine gültige Google Sheet ID in der URL gefunden!")
+                st.error(f"ID-Fehler: Keine gültige ID in '{raw_url}' gefunden.")
                 st.stop()
             
             sheet_id = found_id.group(1)
             
-            # 3. Direkte CSV-Links ohne Umwege über Bibliotheken
-            # gid=0 ist meist das erste Blatt (wichtig), sheet=geloescht das zweite
+            # 3. Direkte Export-Links mit absoluten Parametern
             url_w = f"https://docs.google.com{sheet_id}/gviz/tq?tqx=out:csv&sheet=wichtig"
             url_g = f"https://docs.google.com{sheet_id}/gviz/tq?tqx=out:csv&sheet=geloescht"
             
-            # 4. Mit User-Agent laden (manchmal blockt Google einfache Skripte)
-            df_w = pd.read_csv(url_w)
-            df_g = pd.read_csv(url_g)
+            # 4. Laden
+            df_w = pd.read_csv(url_w, on_bad_lines='skip')
+            df_g = pd.read_csv(url_g, on_bad_lines='skip')
             
             st.session_state.wichtige_artikel = set(df_w['link'].dropna().astype(str).tolist()) if 'link' in df_w.columns else set()
             st.session_state.geloeschte_artikel = set(df_g['link'].dropna().astype(str).tolist()) if 'link' in df_g.columns else set()
             
         except Exception as e:
-            st.error(f"Kritischer Verbindungsfehler: {e}")
-            st.info("Bitte prüfe, ob die URL in den Secrets korrekt mit https:// beginnt.")
+            st.error(f"DNS/Verbindungsfehler: {e}")
             st.session_state.wichtige_artikel, st.session_state.geloeschte_artikel = set(), set()
 
 
