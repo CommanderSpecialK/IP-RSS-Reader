@@ -7,7 +7,7 @@ import os
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor
 
-# Konfiguration (wird von GitHub Actions befüllt)
+# 1. Konfiguration laden & prüfen
 REPO = os.getenv("REPO_NAME")
 TOKEN = os.getenv("GH_TOKEN")
 
@@ -22,21 +22,36 @@ def fetch_feed(row):
             entries.append({
                 'title': e.get('title', 'Kein Titel'),
                 'link': e.get('link', '#'),
-                'source_name': row['name'],
-                'category': row['category'],
+                'source_name': str(row['name']),
+                'category': str(row['category']),
                 'is_new': is_new,
                 'published': e.get('published', 'Unbekannt')
             })
         return entries
-    except: return []
+    except Exception as e:
+        print(f"Fehler bei Feed {row['url']}: {e}")
+        return []
 
 def update_cache():
+    if not REPO or not TOKEN:
+        print("FEHLER: REPO_NAME oder GH_TOKEN fehlt in den Env-Variablen!")
+        return
+
     # 1. Feeds laden
-    df_feeds = pd.read_csv("feeds.csv", encoding='utf-8-sig', sep=None, engine='python')
+    print("Lade feeds.csv...")
+    try:
+        df_feeds = pd.read_csv("feeds.csv", encoding='utf-8-sig', sep=None, engine='python')
+    except Exception as e:
+        print(f"CSV Fehler: {e}")
+        return
+
+    print(f"Starte Abruf von {len(df_feeds)} Feeds...")
     all_entries = []
     with ThreadPoolExecutor(max_workers=10) as executor:
         results = list(executor.map(fetch_feed, [row for _, row in df_feeds.iterrows()]))
     for res in results: all_entries.extend(res)
+    
+    print(f"Abruf beendet. {len(all_entries)} Artikel gefunden.")
     
     # 2. In JSON umwandeln
     content = json.dumps(all_entries)
@@ -48,9 +63,10 @@ def update_cache():
         "Authorization": f"token {TOKEN}", 
         "Accept": "application/vnd.github.v3+json"
     }
-    print(f"DEBUG: Sende an URL: {url}")
     
-    # Aktuellen SHA holen, falls Datei existiert
+    print(f"Verbinde mit GitHub API: {url}")
+    
+    # SHA holen
     resp = requests.get(url, headers=headers)
     sha = resp.json().get("sha") if resp.status_code == 200 else None
     
@@ -59,13 +75,15 @@ def update_cache():
         "content": base64.b64encode(content.encode()).decode()
     }
     if sha: payload["sha"] = sha
-        # ... (vor dem requests.put)
-    print(f"Versuche zu schreiben nach: {url}")
+    
+    print("Sende Daten zu GitHub...")
     r = requests.put(url, json=payload, headers=headers)
-    print(f"Status: {r.status_code}, Antwort: {r.text[:100]}")
-
-    r = requests.put(url, json=payload, headers=headers)
-    print(f"Update Status: {r.status_code}")
+    
+    if r.status_code in [200, 201]:
+        print(f"ERFOLG! Status {r.status_code}")
+    else:
+        print(f"FEHLER: Status {r.status_code}")
+        print(f"Antwort: {r.text}")
 
 if __name__ == "__main__":
     update_cache()
