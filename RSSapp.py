@@ -25,20 +25,31 @@ if check_password():
     # 2. PERSISTENTE DATEN LADEN
     if 'wichtige_artikel' not in st.session_state:
         try:
-        # Extrahiere die ID aus deiner URL
-            sheet_id = "1KllMIdRunx5n4ntlnEi5f7R2KO9Cumj9L-8YQ_k8al4"
+        # 1. URL aus Secrets holen und säubern
+            raw_url = st.secrets["gsheets_url"].strip()
         
-        # Direkter CSV-Download-Link von Google
-            url_wichtig = f"https://docs.google.com{sheet_id}/gviz/tq?tqx=out:csv&sheet=wichtig"
-            url_geloescht = f"https://docs.google.com{sheet_id}/gviz/tq?tqx=out:csv&sheet=geloescht"
-        
-            df_w = pd.read_csv(url_wichtig)
-            df_g = pd.read_csv(url_geloescht)
-        
+            # 2. Die ID extrahieren (zwischen /d/ und /)
+            if "/d/" in raw_url:
+                sheet_id = raw_url.split("/d/")[1].split("/")[0]
+            else:
+                sheet_id = raw_url # Falls nur die ID im Secret steht
+
+            # 3. CSV-Export Links generieren
+            url_w = f"https://docs.google.com{sheet_id}/export?format=csv&gid=0" # Blatt 1
+            # Für das zweite Blatt (geloescht) nutzen wir den Namen:
+            url_g = f"https://docs.google.com{sheet_id}/gviz/tq?tqx=out:csv&sheet=geloescht"
+            
+            # 4. Laden mit Pandas (umgeht die gsheets-connection Probleme)
+            df_w = pd.read_csv(url_w)
+            df_g = pd.read_csv(url_g)
+            
             st.session_state.wichtige_artikel = set(df_w['link'].dropna().tolist()) if 'link' in df_w.columns else set()
             st.session_state.geloeschte_artikel = set(df_g['link'].dropna().tolist()) if 'link' in df_g.columns else set()
+            
         except Exception as e:
-            st.error(f"Fehler beim Laden: {e}")
+            st.error(f"Verbindungsfehler: {e}")
+            st.session_state.wichtige_artikel, st.session_state.geloeschte_artikel = set(), set()
+
 
 
 
