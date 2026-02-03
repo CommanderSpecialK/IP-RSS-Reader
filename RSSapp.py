@@ -26,7 +26,7 @@ if check_password():
         repo = st.secrets['repo_name'].strip()
         token = st.secrets['github_token'].strip()
         # KORREKT: Der Schrägstrich nach /repos/
-        url = f"https://api.github.com{repo}/contents/{filename}"
+        url = f"https://api.github.com/{repo}/contents/{filename}"
         headers = {
             "Authorization": f"token {token}",
             "Accept": "application/vnd.github.v3+json"
