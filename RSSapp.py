@@ -26,7 +26,7 @@ if check_password():
     if 'wichtige_artikel' not in st.session_state:
         try:
             # Wir nutzen st.secrets["gsheets_url"] direkt
-            url = "https://docs.google.com/spreadsheets/d/1KllMIdRunx5n4ntlnEi5f7R2KO9Cumj9L-8YQ_k8al4/edit?gid=0#gid=0"
+            url = "https://docs.google.com/spreadsheets/d/1KllMIdRunx5n4ntlnEi5f7R2KO9Cumj9L-8YQ_k8al4/edit?gid=0"
         
             # Versuche die Blätter einzeln zu lesen
             df_w = conn.read(spreadsheet=url, worksheet="wichtig", ttl="0")
