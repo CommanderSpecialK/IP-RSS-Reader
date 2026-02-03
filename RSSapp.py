@@ -1,17 +1,13 @@
 import streamlit as st
 import pandas as pd
 import feedparser
-import urllib.request
-import re
+import requests
+import base64
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor
-from streamlit_gsheets import GSheetsConnection
 
-# 1. SETUP
-st.set_page_config(page_title="IP RSS FastManager", layout="wide")
-
-# Google Sheets Verbindung initialisieren
-conn = st.connection("gsheets", type=GSheetsConnection)
+# --- 1. SETUP ---
+st.set_page_config(page_title="IP RSS Manager", layout="wide")
 
 def check_password():
     if st.session_state.get("password_correct", False): return True
@@ -24,137 +20,114 @@ def check_password():
     return False
 
 if check_password():
-    # 2. PERSISTENTE DATEN LADEN
+    # --- 2. GITHUB PERSISTENCE LOGIK ---
+    def load_from_github(filename):
+        url = f"https://api.github.com{st.secrets['repo_name']}/contents/{filename}"
+        headers = {"Authorization": f"token {st.secrets['github_token']}"}
+        resp = requests.get(url, headers=headers)
+        if resp.status_code == 200:
+            content = base64.b64decode(resp.json()['content']).decode()
+            return set(content.splitlines())
+        return set()
 
+    def save_to_github(filename, links_set):
+        url = f"https://api.github.com{st.secrets['repo_name']}/contents/{filename}"
+        headers = {"Authorization": f"token {st.secrets['github_token']}"}
+        resp = requests.get(url, headers=headers)
+        sha = resp.json().get("sha") if resp.status_code == 200 else None
+        
+        content = "\n".join(list(links_set))
+        payload = {
+            "message": f"Update {filename}",
+            "content": base64.b64encode(content.encode()).decode(),
+            "sha": sha
+        }
+        requests.put(url, json=payload, headers=headers)
 
-    
+    # Initiales Laden
     if 'wichtige_artikel' not in st.session_state:
-        try:
-            # 1. Absolut radikale Reinigung der URL aus den Secrets
-            # Entfernt ALLES außer Buchstaben, Zahlen und die nötigsten URL-Zeichen
-            raw_url = str(st.secrets["gsheets_url"])
-            clean_url = "".join(re.findall(r"[a-zA-Z0-9-.:/_?=&]", raw_url))
-            
-            # 2. ID extrahieren
-            sheet_id = "1KllMIdRunx5n4ntlnEi5f7R2KO9Cumj9L-8YQ_k8al4" # Deine ID
-            
-            # 3. Direkte Export-Links
-            url_w = f"https://docs.google.com{sheet_id}/gviz/tq?tqx=out:csv&sheet=wichtig"
-            url_g = f"https://docs.google.com{sheet_id}/gviz/tq?tqx=out:csv&sheet=geloescht"
-            
-            # 4. Laden mit Pandas (User-Agent hilft gegen Blockaden)
-            storage_options = {'User-Agent': 'Mozilla/5.0'}
-            
-            df_w = pd.read_csv(url_w, storage_options=storage_options)
-            df_g = pd.read_csv(url_g, storage_options=storage_options)
-            
-            # 5. In Session State schreiben
-            st.session_state.wichtige_artikel = set(df_w['link'].dropna().astype(str).tolist()) if 'link' in df_w.columns else set()
-            st.session_state.geloeschte_artikel = set(df_g['link'].dropna().astype(str).tolist()) if 'link' in df_g.columns else set()
-            
-        except Exception as e:
-            st.error(f"Verbindungsfehler: {e}")
-            st.info("Prüfe, ob in den Streamlit-Secrets 'gsheets_url' korrekt geschrieben ist.")
-            st.session_state.wichtige_artikel, st.session_state.geloeschte_artikel = set(), set()
+        st.session_state.wichtige_artikel = load_from_github("wichtig.txt")
+        st.session_state.geloeschte_artikel = load_from_github("geloescht.txt")
 
-
-
-    # 3. PARALLELES LADEN DER FEEDS (Der Turbo)
-    def fetch_single_feed(row):
+    # --- 3. RSS LOGIK (PARALLEL) ---
+    def fetch_feed(row):
         feed = feedparser.parse(row['url'])
-        entries = []
         now = datetime.now()
-        for entry in feed.entries:
-            published = entry.get('published_parsed')
-            is_new = (now - datetime(*published[:6])) < timedelta(hours=24) if published else False
+        entries = []
+        for e in feed.entries:
+            pub = e.get('published_parsed')
+            is_new = (now - datetime(*pub[:6])) < timedelta(hours=24) if pub else False
             entries.append({
-                'title': entry.get('title', 'Kein Titel'),
-                'link': entry.get('link', '#'),
+                'title': e.get('title', 'Kein Titel'),
+                'link': e.get('link', '#'),
                 'source_name': row['name'],
                 'category': row['category'],
                 'is_new': is_new,
-                'published': entry.get('published', 'Unbekannt')
+                'published': e.get('published', 'Unbekannt')
             })
         return entries
 
-    @st.cache_data(ttl=86400)
-    def get_all_entries_parallel(df_feeds):
-        all_news = []
-        # Nutzt 10 "Arbeiter" gleichzeitig zum Abrufen der Feeds
+    @st.cache_data(ttl=3600) # Jede Stunde frische Daten
+    def load_all_news():
+        df_feeds = pd.read_csv("feeds.csv", encoding='utf-8-sig', sep=None, engine='python')
+        all_entries = []
         with ThreadPoolExecutor(max_workers=10) as executor:
-            results = list(executor.map(fetch_single_feed, [row for _, row in df_feeds.iterrows()]))
-        for res in results: all_news.extend(res)
-        return all_news
+            results = list(executor.map(fetch_feed, [row for _, row in df_feeds.iterrows()]))
+        for res in results: all_entries.extend(res)
+        return all_entries
 
-    # CSV laden
-    df_feeds = pd.read_csv("feeds.csv", encoding='utf-8-sig', sep=None, engine='python')
-    all_news = get_all_entries_parallel(df_feeds)
+    all_news = load_all_news()
 
-    # 4. SIDEBAR & FILTER (wie gehabt)
+    # --- 4. SIDEBAR & FILTER ---
     with st.sidebar:
-        st.title("📌 IP News Filter")
-        if st.button("🔄 Feeds neu laden"):
+        st.title("📌 IP Filter")
+        if st.button("🔄 Alles aktualisieren"):
             st.cache_data.clear()
             st.rerun()
-        view = st.radio("Kategorie", ["Alle", "EPO", "WIPO", "⭐ Wichtig"])
-        search = st.text_input("🔍 Suche...")
+        view = st.radio("Ansicht", ["Alle", "EPO", "WIPO", "⭐ Wichtig"])
+        search = st.text_input("🔍 Suchen...")
 
-    # Filterlogik
-    filtered_news = [e for e in all_news if e['link'] not in st.session_state.geloeschte_artikel]
+    # Filtern
+    news = [e for e in all_news if e['link'] not in st.session_state.geloeschte_artikel]
     if view == "⭐ Wichtig":
-        filtered_news = [e for e in filtered_news if e['link'] in st.session_state.wichtige_artikel]
+        news = [e for e in news if e['link'] in st.session_state.wichtige_artikel]
     elif view != "Alle":
-        filtered_news = [e for e in filtered_news if e['category'] == view]
+        news = [e for e in news if e['category'] == view]
     if search:
-        filtered_news = [e for e in filtered_news if search.lower() in e['title'].lower()]
+        news = [e for e in news if search.lower() in e['title'].lower()]
 
+    # --- 5. ANZEIGE ---
+    st.header(f"News: {view}")
+    quellen = sorted(list(set([e['source_name'] for e in news])))
 
-# 5. SPEICHER-FUNKTION
-def update_sheet(link, worksheet, action="add"):
-    # Auch hier die URL beim Lesen und Update mitgeben
-    df = conn.read(spreadsheet=st.secrets["gsheets_url"], worksheet=worksheet, ttl=0)
-    if action == "add":
-        df = pd.concat([df, pd.DataFrame({'link': [link]})]).drop_duplicates()
-    else:
-        df = df[df['link'] != link]
-    conn.update(spreadsheet=st.secrets["gsheets_url"], worksheet=worksheet, data=df)
-
-
-    # 6. ANZEIGE MIT FRAGMENTEN (Verhindert komplettes Neuladen beim Löschen)
-    @st.fragment
-    def render_article(entry, idx):
-        link = entry['link']
-        unique_key = f"{entry['source_name']}_{idx}"
+    for q in quellen:
+        q_news = [e for e in news if e['source_name'] == q]
+        anz_neu = sum(1 for e in q_news if e['is_new'])
+        label = f"📂 {q}" + (f" 🔵 ({anz_neu})" if anz_neu > 0 else "")
         
-        col_text, col_fav, col_del = st.columns([0.8, 0.1, 0.1])
-        with col_text:
-            is_fav = "⭐ " if link in st.session_state.wichtige_artikel else ""
-            tag = "🟢 " if entry['is_new'] else ""
-            st.markdown(f"{tag}{is_fav}**[{entry['title']}]({link})**")
-            st.caption(f"{entry['source_name']} | {entry['published']}")
-
-        with col_fav:
-            if st.button("⭐", key=f"f_{unique_key}"):
-                if link in st.session_state.wichtige_artikel:
-                    st.session_state.wichtige_artikel.remove(link)
-                    update_sheet(link, "wichtig", "remove")
-                else:
-                    st.session_state.wichtige_artikel.add(link)
-                    update_sheet(link, "wichtig", "add")
-                st.rerun()
-        with col_del:
-            if st.button("🗑️", key=f"d_{unique_key}"):
-                st.session_state.geloeschte_artikel.add(link)
-                update_sheet(link, "geloescht", "add")
-                st.rerun()
-        st.divider()
-
-    # Ordner-Anzeige
-    aktuelle_quellen = sorted(list(set([e['source_name'] for e in filtered_news])))
-    for quelle in aktuelle_quellen:
-        quell_news = [e for e in filtered_news if e['source_name'] == quelle]
-        anzahl_neu = sum(1 for e in quell_news if e['is_new'])
-        label = f"📂 {quelle} " + (f"🔵 ({anzahl_neu})" if anzahl_neu > 0 else "")
         with st.expander(label, expanded=False):
-            for i, entry in enumerate(quell_news):
-                render_article(entry, i)
+            for i, entry in enumerate(q_news):
+                link = entry['link']
+                col_t, col_f, col_d = st.columns([0.8, 0.1, 0.1])
+                
+                with col_t:
+                    fav = "⭐ " if link in st.session_state.wichtige_artikel else ""
+                    neu = "🟢 " if entry['is_new'] else ""
+                    st.markdown(f"{neu}{fav}**[{entry['title']}]({link})**")
+                    st.caption(f"{entry['published']}")
+                
+                with col_f:
+                    if st.button("⭐", key=f"f_{q}_{i}"):
+                        if link in st.session_state.wichtige_artikel:
+                            st.session_state.wichtige_artikel.remove(link)
+                        else:
+                            st.session_state.wichtige_artikel.add(link)
+                        save_to_github("wichtig.txt", st.session_state.wichtige_artikel)
+                        st.rerun()
+                
+                with col_d:
+                    if st.button("🗑️", key=f"d_{q}_{i}"):
+                        st.session_state.geloeschte_artikel.add(link)
+                        save_to_github("geloescht.txt", st.session_state.geloeschte_artikel)
+                        st.rerun()
+                st.divider()
