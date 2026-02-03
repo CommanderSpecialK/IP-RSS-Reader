@@ -7,4 +7,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Ping Streamlit URL
-        run: curl -I https://deine-app-url.streamlit.app
+        run: curl -I https://ip-rss-reader.streamlit.app
