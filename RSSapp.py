@@ -70,11 +70,11 @@ if check_password():
     if search:
         filtered_news = [e for e in filtered_news if search.lower() in e.title.lower()]
 
-    # 6. ANZEIGE
-    st.header(f"Beiträge: {view}")
+# 6. ANZEIGE (Korrigierte Einrückung)
+st.header(f"Beiträge: {view}")
 
-    for entry in filtered_news:
-    # Sicherstellen, dass Titel und Link existieren (Fallback-Werte)
+for entry in filtered_news:
+    # Diese Zeilen MÜSSEN eingerückt sein:
     title = entry.get('title', 'Kein Titel vorhanden')
     link = entry.get('link', '#')
     item_id = link 
@@ -83,20 +83,20 @@ if check_password():
     
     with col_text:
         is_fav = "⭐ " if item_id in st.session_state.wichtige_artikel else ""
-        # Nutze die sicher extrahierten Variablen title und link
         st.markdown(f"{is_fav}**[{title}]({link})**")
         st.caption(f"{entry.get('source_name', 'Unbekannt')} | {entry.get('published', 'Kein Datum')}")
+    
+    with col_fav:
+        if st.button("⭐", key=f"fav_{item_id}"):
+            if item_id in st.session_state.wichtige_artikel:
+                st.session_state.wichtige_artikel.remove(item_id)
+            else:
+                st.session_state.wichtige_artikel.add(item_id)
+            st.rerun()
+            
+    with col_del:
+        if st.button("🗑️", key=f"del_{item_id}"):
+            st.session_state.geloeschte_artikel.add(item_id)
+            st.rerun()
+    st.divider()
 
-        with col_fav:
-            if st.button("⭐", key=f"fav_{item_id}"):
-                if item_id in st.session_state.wichtige_artikel:
-                    st.session_state.wichtige_artikel.remove(item_id)
-                else:
-                    st.session_state.wichtige_artikel.add(item_id)
-                st.rerun()
-                
-        with col_del:
-            if st.button("🗑️", key=f"del_{item_id}"):
-                st.session_state.geloeschte_artikel.add(item_id)
-                st.rerun()
-        st.divider()
