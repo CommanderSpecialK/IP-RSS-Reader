@@ -54,7 +54,11 @@ def update_cache():
         "content": base64.b64encode(content.encode()).decode()
     }
     if sha: payload["sha"] = sha
-    
+        # ... (vor dem requests.put)
+    print(f"Versuche zu schreiben nach: {url}")
+    r = requests.put(url, json=payload, headers=headers)
+    print(f"Status: {r.status_code}, Antwort: {r.text[:100]}")
+
     r = requests.put(url, json=payload, headers=headers)
     print(f"Update Status: {r.status_code}")
 
