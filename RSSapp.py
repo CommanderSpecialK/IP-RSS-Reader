@@ -45,7 +45,7 @@ if check_password():
 
     # 3. DATEN LADEN
 
-    df_feeds = pd.read_csv("feeds.csv", encoding='latin1')
+    df_feeds = pd.read_csv("feeds.csv", encoding='utf-8-sig')
     all_news = get_all_entries(df_feeds)
 
     # 4. SIDEBAR
