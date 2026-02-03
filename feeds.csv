@@ -1,4 +1,4 @@
-name;url;category
+ï»¿name;url;category
 AFW Holding;https://register.epo.org/rssSearch?query=applicant+%3D+afw+and+applicant+%3D+holding&lng=de;EPO
 BENZ;https://register.epo.org/rssSearch?query=applicant+%3D+benz+and+applicant+%3D+werkzeug*&lng=de;EPO
 CHIRON;https://register.epo.org/rssSearch?query=applicant+%3D+chiron+and+applicant+%3D+group&lng=de;EPO
@@ -27,7 +27,7 @@ Heinrich Georg;https://register.epo.org/rssSearch?query=%28applicant+%3D+heinric
 HERMLE;https://register.epo.org/rssSearch?query=applicant+%3D+hermle+and+applicant+%3D+berthold&lng=de;EPO
 Heyligenstaedt;https://register.epo.org/rssSearch?query=applicant+%3D+heyligenstaedt&lng=de;EPO
 HORKOS;https://register.epo.org/rssSearch?query=applicant+%3D+horkos&lng=de;EPO
-HÜLLER HILLE;https://register.epo.org/rssSearch?query=applicant+%3D+h%C3%BCller+and+applicant+%3D+hille&lng=de;EPO
+HÃœLLER HILLE;https://register.epo.org/rssSearch?query=applicant+%3D+h%C3%BCller+and+applicant+%3D+hille&lng=de;EPO
 HURCO;https://register.epo.org/rssSearch?query=applicant+%3D+hurco&lng=de;EPO
 Hyundai Wia;https://register.epo.org/rssSearch?query=applicant+%3D+hyundai+and+applicant+%3D+wia&lng=de;EPO
 Index Werke;https://register.epo.org/rssSearch?query=applicant+%3D+index+and+applicant+%3D+werke&lng=de;EPO
@@ -43,11 +43,11 @@ NAKAMURA TOME;https://register.epo.org/rssSearch?query=applicant+%3D+nakamura+an
 NSH;https://register.epo.org/rssSearch?query=applicant+%3D+nsh&lng=de;EPO
 OKUMA;https://register.epo.org/rssSearch?query=applicant+%3D+OKUMA+and+applicant+%3D+CORPORATION&lng=de;EPO
 PITTLER;https://register.epo.org/rssSearch?query=%28applicant+%3D+PITTLER+and+applicant+%3D+T%29+and+applicant+%3D+S&lng=de;EPO
-PRÄWEMA;https://register.epo.org/rssSearch?query=applicant+%3D+pr%C3%A4wema&lng=de;EPO
+PRÃ„WEMA;https://register.epo.org/rssSearch?query=applicant+%3D+pr%C3%A4wema&lng=de;EPO
 PROMOT;https://register.epo.org/rssSearch?query=applicant+%3D+promot+and+applicant+%3D+automation&lng=de;EPO
 REIDEN;https://register.epo.org/rssSearch?query=applicant+%3D+Reiden+and+applicant+%3D+Technik&lng=de;EPO
 SAUTER;https://register.epo.org/rssSearch?query=applicant+%3D+SAUTER&lng=de;EPO
-Schwäbische WZM;https://register.epo.org/rssSearch?query=applicant+%3D+SCHW%C3%84BISCHE+and+applicant+%3D+WERKZEUGMASCHINEN&lng=de;EPO
+SchwÃ¤bische WZM;https://register.epo.org/rssSearch?query=applicant+%3D+SCHW%C3%84BISCHE+and+applicant+%3D+WERKZEUGMASCHINEN&lng=de;EPO
 Shenyang;https://register.epo.org/rssSearch?query=applicant+%3D+shenyang+and+applicant+%3D+machine&lng=de;EPO
 Shin Nippon;https://register.epo.org/rssSearch?query=%28applicant+%3D+shin+and+applicant+%3D+nippon%29+and+applicant+%3D+koki&lng=de;EPO
 SHW;https://register.epo.org/rssSearch?query=applicant+%3D+SHW+and+applicant+%3D+WERKZEUGMASCHINEN&lng=de;EPO
@@ -94,7 +94,7 @@ Heinrich Georg;https://patentscope.wipo.int/search/de/e38cf249-6620-46b1-92de-fb
 HERMLE;https://patentscope.wipo.int/search/de/a4110729-bc81-4b0d-a75c-89e007efbaa9/rss.xml;WIPO
 Heyligenstaedt;https://patentscope.wipo.int/search/de/fa1e7816-3945-407c-b4fd-c1b1fbc025d6/rss.xml;WIPO
 HORKOS;https://patentscope.wipo.int/search/de/5fa31d00-d372-4549-9288-4db28f3749ac/rss.xml;WIPO
-HÜLLER HILLE;https://patentscope.wipo.int/search/de/beb5307a-a7d7-4866-bbd4-4f94f0740f67/rss.xml;WIPO
+HÃœLLER HILLE;https://patentscope.wipo.int/search/de/beb5307a-a7d7-4866-bbd4-4f94f0740f67/rss.xml;WIPO
 HURCO;https://patentscope.wipo.int/search/de/3a8bbfff-52e8-40db-a672-64d69f623537/rss.xml;WIPO
 HWACHEON;https://patentscope.wipo.int/search/de/0633b454-6d3a-4bbb-9319-9c5c2c510c8b/rss.xml;WIPO
 INDEX Werke;https://patentscope.wipo.int/search/de/ef401bd6-ad9d-4195-8ec8-20c6af0885eb/rss.xml;WIPO
@@ -111,12 +111,12 @@ NILES SIMMONS;https://patentscope.wipo.int/search/de/a27830b6-915f-47a9-95ea-c49
 NSH;https://patentscope.wipo.int/search/de/7a64e5ba-c8ab-4997-9c2c-05e36082bfc5/rss.xml;WIPO
 OKUMA;https://patentscope.wipo.int/search/de/208246c9-0d03-435a-9e9e-7be5361a9f94/rss.xml;WIPO
 Pittler;https://patentscope.wipo.int/search/de/0ca16e0c-d940-4370-9881-b21f246208de/rss.xml;WIPO
-PRÄWEMA;https://patentscope.wipo.int/search/de/441d2e0c-24e9-4e39-ab24-128fa9336b73/rss.xml;WIPO
+PRÃ„WEMA;https://patentscope.wipo.int/search/de/441d2e0c-24e9-4e39-ab24-128fa9336b73/rss.xml;WIPO
 PROMOT;https://patentscope.wipo.int/search/de/37a6fb7c-e9c4-4f46-9962-7cab72a663e8/rss.xml;WIPO
 Reiden Technik;https://patentscope.wipo.int/search/de/d053d714-0579-45e9-9bff-12a00500355b/rss.xml;WIPO
 RIFA;https://patentscope.wipo.int/search/de/011b114d-c430-4d5a-877d-9b9164f25e4e/rss.xml;WIPO
 SAUTER;https://patentscope.wipo.int/search/de/5baff555-327a-43e0-bc0d-7119659e7deb/rss.xml;WIPO
-Schwäbische WZM;https://patentscope.wipo.int/search/de/1de9e30e-bd4c-43cc-be24-6e0a8b6e5895/rss.xml;WIPO
+SchwÃ¤bische WZM;https://patentscope.wipo.int/search/de/1de9e30e-bd4c-43cc-be24-6e0a8b6e5895/rss.xml;WIPO
 Shenyang;https://patentscope.wipo.int/search/de/655bbba4-8b22-4162-acd2-87dd1e42bad9/rss.xml;WIPO
 Shin Nippon;https://patentscope.wipo.int/search/de/6936cfda-b46e-464b-902c-37b7237f54d5/rss.xml;WIPO
 SHW Werkzeugmaschinen;https://patentscope.wipo.int/search/de/3e8b11f3-706d-4dd1-8616-56e4a2b92556/rss.xml;WIPO
