@@ -32,7 +32,7 @@ if check_password():
                 return set()
     
     
-            url = f"https://api.github.com{repo}/contents/{filename}"
+            url = f"https://api.github.com/{repo}/contents/{filename}"
             headers = {
                 "Authorization": f"token {st.secrets['github_token'].strip()}",
                 "Accept": "application/vnd.github.v3+json"
