@@ -52,9 +52,10 @@ if check_password():
 
 
     def save_to_github(filename, links_set):
-        url = f"https://api.github.com{st.secrets['repo_name']}/contents/{filename}"
-        headers = {"Authorization": f"token {st.secrets['github_token']}"}
-        resp = requests.get(url, headers=headers)
+        repo = str(st.secrets['repo_name']).strip()
+        url = f"https://api.github.com/{repo}/contents/{filename}"
+        headers = {"Authorization": f"token {st.secrets['github_token'].strip()}"}
+        resp = requests.get(url, headers=headers) 
         sha = resp.json().get("sha") if resp.status_code == 200 else None
         
         content = "\n".join(list(links_set))
