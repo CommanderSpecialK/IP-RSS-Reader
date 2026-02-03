@@ -24,18 +24,18 @@ if check_password():
     def load_from_github(filename):
         try:
             # Säuberung der Secrets
-            repo = str(st.secrets.get('repo_name', '')).strip()
+            repo = str(st.secrets['repo_name']).strip()
             token = str(st.secrets.get('github_token', '')).strip()
             
             if not repo or not token:
                 st.warning("Secrets für GitHub fehlen!")
                 return set()
     
+    
             url = f"https://api.github.com{repo}/contents/{filename}"
             headers = {
-                "Authorization": f"token {token}",
-                "Accept": "application/vnd.github.v3+json",
-                "User-Agent": "Streamlit-RSS-App"
+                "Authorization": f"token {st.secrets['github_token'].strip()}",
+                "Accept": "application/vnd.github.v3+json"
             }
             
             # Timeout hinzugefügt, um ewiges Warten zu verhindern
