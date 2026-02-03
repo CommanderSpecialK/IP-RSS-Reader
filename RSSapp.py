@@ -25,19 +25,21 @@ if check_password():
     # 2. PERSISTENTE DATEN LADEN
     if 'wichtige_artikel' not in st.session_state:
         try:
-            # Wir nutzen st.secrets["gsheets_url"] direkt
-            url = "https://docs.google.com/spreadsheets/d/1KllMIdRunx5n4ntlnEi5f7R2KO9Cumj9L-8YQ_k8al4"
+        # Extrahiere die ID aus deiner URL
+            sheet_id = "1KllMIdRunx5n4ntlnEi5f7R2KO9Cumj9L-8YQ_k8al4"
         
-            # Versuche die Blätter einzeln zu lesen
-            df_w = conn.read(spreadsheet=url, worksheet="wichtig", ttl="0")
-            df_g = conn.read(spreadsheet=url, worksheet="geloescht", ttl="0")
+        # Direkter CSV-Download-Link von Google
+            url_wichtig = f"https://docs.google.com{sheet_id}/gviz/tq?tqx=out:csv&sheet=wichtig"
+            url_geloescht = f"https://docs.google.com{sheet_id}/gviz/tq?tqx=out:csv&sheet=geloescht"
         
-            # Falls die Spalte 'link' fehlt (Sheet ganz leer), erstelle leere Sets
+            df_w = pd.read_csv(url_wichtig)
+            df_g = pd.read_csv(url_geloescht)
+        
             st.session_state.wichtige_artikel = set(df_w['link'].dropna().tolist()) if 'link' in df_w.columns else set()
             st.session_state.geloeschte_artikel = set(df_g['link'].dropna().tolist()) if 'link' in df_g.columns else set()
         except Exception as e:
             st.error(f"Fehler beim Laden: {e}")
-            st.session_state.wichtige_artikel, st.session_state.geloeschte_artikel = set(), set()
+
 
 
     # 3. PARALLELES LADEN DER FEEDS (Der Turbo)
