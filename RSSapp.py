@@ -9,7 +9,7 @@ from streamlit_gsheets import GSheetsConnection
 st.set_page_config(page_title="IP RSS FastManager", layout="wide")
 
 # Google Sheets Verbindung initialisieren
-conn = st.connection("gsheets", type=GSheetsConnection, spreadsheet=st.secrets["gsheets_url"])
+conn = st.connection("gsheets", type=GSheetsConnection)
 
 def check_password():
     if st.session_state.get("password_correct", False): return True
@@ -24,12 +24,15 @@ def check_password():
 if check_password():
     # 2. PERSISTENTE DATEN LADEN
     if 'wichtige_artikel' not in st.session_state:
-        try:
-            # Lade Favoriten und gelöschte Links aus dem Sheet
-            st.session_state.wichtige_artikel = set(conn.read(worksheet="wichtig", ttl=0)['link'].dropna().tolist())
-            st.session_state.geloeschte_artikel = set(conn.read(worksheet="geloescht", ttl=0)['link'].dropna().tolist())
-        except:
-            st.session_state.wichtige_artikel, st.session_state.geloeschte_artikel = set(), set()
+    try:
+        # Hier die URL explizit mitgeben
+        df_w = conn.read(spreadsheet=st.secrets["gsheets_url"], worksheet="wichtig", ttl=0)
+        df_g = conn.read(spreadsheet=st.secrets["gsheets_url"], worksheet="geloescht", ttl=0)
+        st.session_state.wichtige_artikel = set(df_w['link'].dropna().tolist())
+        st.session_state.geloeschte_artikel = set(df_g['link'].dropna().tolist())
+    except Exception as e:
+        st.warning(f"Konnte Sheets nicht laden: {e}")
+        st.session_state.wichtige_artikel, st.session_state.geloeschte_artikel = set(), set()
 
     # 3. PARALLELES LADEN DER FEEDS (Der Turbo)
     def fetch_single_feed(row):
@@ -80,15 +83,17 @@ if check_password():
     if search:
         filtered_news = [e for e in filtered_news if search.lower() in e['title'].lower()]
 
-    # 5. SPEICHER-FUNKTION (Hintergrund)
-    def update_sheet(link, worksheet, action="add"):
-        # Aktuelle Liste vom Sheet holen
-        df = conn.read(worksheet=worksheet, ttl=0)
-        if action == "add":
-            df = pd.concat([df, pd.DataFrame({'link': [link]})]).drop_duplicates()
-        else:
-            df = df[df['link'] != link]
-        conn.update(worksheet=worksheet, data=df)
+
+# 5. SPEICHER-FUNKTION
+def update_sheet(link, worksheet, action="add"):
+    # Auch hier die URL beim Lesen und Update mitgeben
+    df = conn.read(spreadsheet=st.secrets["gsheets_url"], worksheet=worksheet, ttl=0)
+    if action == "add":
+        df = pd.concat([df, pd.DataFrame({'link': [link]})]).drop_duplicates()
+    else:
+        df = df[df['link'] != link]
+    conn.update(spreadsheet=st.secrets["gsheets_url"], worksheet=worksheet, data=df)
+
 
     # 6. ANZEIGE MIT FRAGMENTEN (Verhindert komplettes Neuladen beim Löschen)
     @st.fragment
