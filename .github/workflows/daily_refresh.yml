@@ -1,10 +1,1 @@
-name: Wake up App
-on:
-  schedule:
-    - cron: '0 6 * * *' # Täglich 6:00 UTC (ca. 7:00 MEZ)
-jobs:
-  ping:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Ping Streamlit URL
-        run: curl -I https://ip-rss-reader.streamlit.app
+
