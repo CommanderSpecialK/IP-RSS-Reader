@@ -45,8 +45,9 @@ if check_password():
                 content = base64.b64decode(resp.json()['content']).decode()
                 return set(line.strip() for line in content.splitlines() if line.strip())
         except Exception as e:
-            # Zeige den Fehler nur dezent an, statt abzustürzen
-            st.sidebar.error(f"Verbindung zu GitHub fehlgeschlagen. Offline-Modus aktiv.")
+            # Das zeigt uns den exakten technischen Grund in der Sidebar
+            st.sidebar.error(f"GitHub-Fehler: {str(e)}")
+
         return set()
 
 
