@@ -3,10 +3,11 @@ import pandas as pd
 import feedparser
 import requests
 import base64
+import json
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor
 
-# --- 1. SETUP ---
+# --- 1. CONFIG & SETUP ---
 st.set_page_config(page_title="IP RSS Manager", layout="wide")
 
 def check_password():
@@ -20,77 +21,70 @@ def check_password():
     return False
 
 if check_password():
-    # --- 2. GITHUB PERSISTENCE LOGIK ---
-    def load_from_github(filename):
-        try:
-            # Säuberung der Secrets
-            repo = str(st.secrets['repo_name']).strip()
-            token = str(st.secrets.get('github_token', '')).strip()
-            
-            if not repo or not token:
-                st.warning("Secrets für GitHub fehlen!")
-                return set()
-    
-    
-            url = f"https://api.github.com/{repo}/contents/{filename}"
-            headers = {
-                "Authorization": f"token {st.secrets['github_token'].strip()}",
-                "Accept": "application/vnd.github.v3+json"
-            }
-            
-            # Timeout hinzugefügt, um ewiges Warten zu verhindern
-            resp = requests.get(url, headers=headers, timeout=5)
-            
-            if resp.status_code == 200:
-                content = base64.b64decode(resp.json()['content']).decode()
-                return set(line.strip() for line in content.splitlines() if line.strip())
-        except Exception as e:
-            # Das zeigt uns den exakten technischen Grund in der Sidebar
-            st.sidebar.error(f"GitHub-Fehler: {str(e)}")
-
-        return set()
-
-
-    def save_to_github(filename, links_set):
-        repo = str(st.secrets['repo_name']).strip()
-        url = f"https://api.github.com/{repo}/contents/{filename}"
-        headers = {"Authorization": f"token {st.secrets['github_token'].strip()}"}
-        resp = requests.get(url, headers=headers) 
-        sha = resp.json().get("sha") if resp.status_code == 200 else None
-        
-        content = "\n".join(list(links_set))
-        payload = {
-            "message": f"Update {filename}",
-            "content": base64.b64encode(content.encode()).decode(),
-            "sha": sha
+    # --- 2. GITHUB STORAGE LOGIK (KORRIGIERT) ---
+    def github_request(filename, method="GET", content=None):
+        repo = st.secrets['repo_name'].strip()
+        token = st.secrets['github_token'].strip()
+        # KORREKT: Der Schrägstrich nach /repos/
+        url = f"https://api.github.com{repo}/contents/{filename}"
+        headers = {
+            "Authorization": f"token {token}",
+            "Accept": "application/vnd.github.v3+json"
         }
-        requests.put(url, json=payload, headers=headers)
+        
+        if method == "GET":
+            resp = requests.get(url, headers=headers, timeout=10)
+            if resp.status_code == 200:
+                data = resp.json()
+                return base64.b64decode(data['content']).decode(), data['sha']
+            return None, None
+        
+        elif method == "PUT":
+            _, sha = github_request(filename, method="GET")
+            payload = {
+                "message": f"Update {filename}",
+                "content": base64.b64encode(content.encode()).decode()
+            }
+            if sha: payload["sha"] = sha
+            return requests.put(url, json=payload, headers=headers, timeout=10)
 
-    # Initiales Laden
+    # Daten initial laden
     if 'wichtige_artikel' not in st.session_state:
-        st.session_state.wichtige_artikel = load_from_github("wichtig.txt")
-        st.session_state.geloeschte_artikel = load_from_github("geloescht.txt")
+        raw_w, _ = github_request("wichtig.txt")
+        st.session_state.wichtige_artikel = set(raw_w.splitlines()) if raw_w else set()
+        
+        raw_g, _ = github_request("geloescht.txt")
+        st.session_state.geloeschte_artikel = set(raw_g.splitlines()) if raw_g else set()
 
-    # --- 3. RSS LOGIK (PARALLEL) ---
+    # --- 3. RSS LOGIK (OPTIMIERT) ---
     def fetch_feed(row):
-        feed = feedparser.parse(row['url'])
-        now = datetime.now()
-        entries = []
-        for e in feed.entries:
-            pub = e.get('published_parsed')
-            is_new = (now - datetime(*pub[:6])) < timedelta(hours=24) if pub else False
-            entries.append({
-                'title': e.get('title', 'Kein Titel'),
-                'link': e.get('link', '#'),
-                'source_name': row['name'],
-                'category': row['category'],
-                'is_new': is_new,
-                'published': e.get('published', 'Unbekannt')
-            })
-        return entries
+        try:
+            feed = feedparser.parse(row['url'])
+            now = datetime.now()
+            entries = []
+            for e in feed.entries:
+                pub = e.get('published_parsed')
+                is_new = (now - datetime(*pub[:6])) < timedelta(hours=24) if pub else False
+                entries.append({
+                    'title': e.get('title', 'Kein Titel'),
+                    'link': e.get('link', '#'),
+                    'source_name': row['name'],
+                    'category': row['category'],
+                    'is_new': is_new,
+                    'published': e.get('published', 'Unbekannt')
+                })
+            return entries
+        except: return []
 
-    @st.cache_data(ttl=3600) # Jede Stunde frische Daten
-    def load_all_news():
+    @st.cache_data(ttl=3600)
+    def load_news_data():
+        # Versuche Cache zu laden
+        raw_cache, _ = github_request("news_cache.json")
+        if raw_cache:
+            try: return json.loads(raw_cache)
+            except: pass
+            
+        # Falls kein Cache, live laden
         df_feeds = pd.read_csv("feeds.csv", encoding='utf-8-sig', sep=None, engine='python')
         all_entries = []
         with ThreadPoolExecutor(max_workers=10) as executor:
@@ -98,14 +92,16 @@ if check_password():
         for res in results: all_entries.extend(res)
         return all_entries
 
-    all_news = load_all_news()
+    all_news = load_news_data()
 
     # --- 4. SIDEBAR & FILTER ---
     with st.sidebar:
         st.title("📌 IP Filter")
-        if st.button("🔄 Alles aktualisieren"):
+        if st.button("🔄 Alles live aktualisieren", use_container_width=True):
             st.cache_data.clear()
             st.rerun()
+        
+        st.divider()
         view = st.radio("Ansicht", ["Alle", "EPO", "WIPO", "⭐ Wichtig"])
         search = st.text_input("🔍 Suchen...")
 
@@ -130,6 +126,8 @@ if check_password():
         with st.expander(label, expanded=False):
             for i, entry in enumerate(q_news):
                 link = entry['link']
+                unique_key = f"{q}_{i}"
+                
                 col_t, col_f, col_d = st.columns([0.8, 0.1, 0.1])
                 
                 with col_t:
@@ -139,17 +137,17 @@ if check_password():
                     st.caption(f"{entry['published']}")
                 
                 with col_f:
-                    if st.button("⭐", key=f"f_{q}_{i}"):
+                    if st.button("⭐", key=f"f_{unique_key}"):
                         if link in st.session_state.wichtige_artikel:
                             st.session_state.wichtige_artikel.remove(link)
                         else:
                             st.session_state.wichtige_artikel.add(link)
-                        save_to_github("wichtig.txt", st.session_state.wichtige_artikel)
+                        github_request("wichtig.txt", "PUT", "\n".join(st.session_state.wichtige_artikel))
                         st.rerun()
                 
                 with col_d:
-                    if st.button("🗑️", key=f"d_{q}_{i}"):
+                    if st.button("🗑️", key=f"d_{unique_key}"):
                         st.session_state.geloeschte_artikel.add(link)
-                        save_to_github("geloescht.txt", st.session_state.geloeschte_artikel)
+                        github_request("geloescht.txt", "PUT", "\n".join(st.session_state.geloeschte_artikel))
                         st.rerun()
                 st.divider()
