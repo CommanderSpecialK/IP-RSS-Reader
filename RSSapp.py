@@ -2,113 +2,129 @@ import streamlit as st
 import pandas as pd
 import feedparser
 from datetime import datetime, timedelta
+from concurrent.futures import ThreadPoolExecutor
+from streamlit_gsheets import GSheetsConnection
 
-# 1. SETUP (Muss als allererstes stehen)
-st.set_page_config(page_title="IP RSS Manager", layout="wide")
+# 1. SETUP
+st.set_page_config(page_title="IP RSS FastManager", layout="wide")
 
-# 2. PASSWORT-ABFRAGE
+# Google Sheets Verbindung initialisieren
+conn = st.connection("gsheets", type=GSheetsConnection)
+
 def check_password():
-    if "password_correct" not in st.session_state:
-        st.session_state["password_correct"] = False
-    if st.session_state["password_correct"]:
-        return True
-
+    if st.session_state.get("password_correct", False): return True
     st.title("Sicherer Login")
-    pwd = st.text_input("Bitte Passwort eingeben", type="password")
+    pwd = st.text_input("Passwort", type="password")
     if st.button("Einloggen") or (pwd != "" and pwd == st.secrets["password"]):
         if pwd == st.secrets["password"]:
             st.session_state["password_correct"] = True
             st.rerun()
-        else:
-            st.error("😕 Passwort falsch")
     return False
 
 if check_password():
-    # Session State initialisieren
+    # 2. PERSISTENTE DATEN LADEN
     if 'wichtige_artikel' not in st.session_state:
-        st.session_state.wichtige_artikel = set()
-    if 'geloeschte_artikel' not in st.session_state:
-        st.session_state.geloeschte_artikel = set()
+        try:
+            # Lade Favoriten und gelöschte Links aus dem Sheet
+            st.session_state.wichtige_artikel = set(conn.read(worksheet="wichtig", ttl=0)['link'].dropna().tolist())
+            st.session_state.geloeschte_artikel = set(conn.read(worksheet="geloescht", ttl=0)['link'].dropna().tolist())
+        except:
+            st.session_state.wichtige_artikel, st.session_state.geloeschte_artikel = set(), set()
 
-    # 3. DATEN LADEN & CACHING
-    @st.cache_data(ttl=86400)
-    def get_all_entries(df_feeds):
-        all_entries = []
+    # 3. PARALLELES LADEN DER FEEDS (Der Turbo)
+    def fetch_single_feed(row):
+        feed = feedparser.parse(row['url'])
+        entries = []
         now = datetime.now()
-        for _, row in df_feeds.iterrows():
-            feed = feedparser.parse(row['url'])
-            for entry in feed.entries:
-                entry['source_name'] = row['name']
-                entry['category'] = row['category']
-                # Neu-Markierung (24h)
-                published = entry.get('published_parsed')
-                if published:
-                    dt_pub = datetime(*published[:6])
-                    entry['is_new'] = (now - dt_pub) < timedelta(hours=24)
-                else:
-                    entry['is_new'] = False
-                all_entries.append(entry)
-        return all_entries
+        for entry in feed.entries:
+            published = entry.get('published_parsed')
+            is_new = (now - datetime(*published[:6])) < timedelta(hours=24) if published else False
+            entries.append({
+                'title': entry.get('title', 'Kein Titel'),
+                'link': entry.get('link', '#'),
+                'source_name': row['name'],
+                'category': row['category'],
+                'is_new': is_new,
+                'published': entry.get('published', 'Unbekannt')
+            })
+        return entries
 
-    try:
-        df_feeds = pd.read_csv("feeds.csv", encoding='utf-8-sig', sep=None, engine='python')
-    except:
-        df_feeds = pd.read_csv("feeds.csv", encoding='latin1', sep=None, engine='python')
+    @st.cache_data(ttl=86400)
+    def get_all_entries_parallel(df_feeds):
+        all_news = []
+        # Nutzt 10 "Arbeiter" gleichzeitig zum Abrufen der Feeds
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            results = list(executor.map(fetch_single_feed, [row for _, row in df_feeds.iterrows()]))
+        for res in results: all_news.extend(res)
+        return all_news
 
-    all_news = get_all_entries(df_feeds)
+    # CSV laden
+    df_feeds = pd.read_csv("feeds.csv", encoding='utf-8-sig', sep=None, engine='python')
+    all_news = get_all_entries_parallel(df_feeds)
 
-    # 4. SIDEBAR
+    # 4. SIDEBAR & FILTER (wie gehabt)
     with st.sidebar:
         st.title("📌 IP News Filter")
-        if st.button("🔄 Feeds manuell laden", use_container_width=True):
+        if st.button("🔄 Feeds neu laden"):
             st.cache_data.clear()
             st.rerun()
-        st.divider()
-        view = st.radio("Haupt-Kategorie", ["Alle", "EPO", "WIPO", "⭐ Wichtig"])
+        view = st.radio("Kategorie", ["Alle", "EPO", "WIPO", "⭐ Wichtig"])
         search = st.text_input("🔍 Suche...")
 
-    # 5. FILTERLOGIK
-    filtered_news = [e for e in all_news if e.link not in st.session_state.geloeschte_artikel]
+    # Filterlogik
+    filtered_news = [e for e in all_news if e['link'] not in st.session_state.geloeschte_artikel]
     if view == "⭐ Wichtig":
-        filtered_news = [e for e in filtered_news if e.link in st.session_state.wichtige_artikel]
+        filtered_news = [e for e in filtered_news if e['link'] in st.session_state.wichtige_artikel]
     elif view != "Alle":
-        filtered_news = [e for e in filtered_news if e.category == view]
+        filtered_news = [e for e in filtered_news if e['category'] == view]
     if search:
-        filtered_news = [e for e in filtered_news if search.lower() in e.get('title', '').lower()]
+        filtered_news = [e for e in filtered_news if search.lower() in e['title'].lower()]
 
-    # 6. ANZEIGE NACH QUELLEN
-    st.header(f"Beiträge: {view}")
+    # 5. SPEICHER-FUNKTION (Hintergrund)
+    def update_sheet(link, worksheet, action="add"):
+        # Aktuelle Liste vom Sheet holen
+        df = conn.read(worksheet=worksheet, ttl=0)
+        if action == "add":
+            df = pd.concat([df, pd.DataFrame({'link': [link]})]).drop_duplicates()
+        else:
+            df = df[df['link'] != link]
+        conn.update(worksheet=worksheet, data=df)
+
+    # 6. ANZEIGE MIT FRAGMENTEN (Verhindert komplettes Neuladen beim Löschen)
+    @st.fragment
+    def render_article(entry, idx):
+        link = entry['link']
+        unique_key = f"{entry['source_name']}_{idx}"
+        
+        col_text, col_fav, col_del = st.columns([0.8, 0.1, 0.1])
+        with col_text:
+            is_fav = "⭐ " if link in st.session_state.wichtige_artikel else ""
+            tag = "🟢 " if entry['is_new'] else ""
+            st.markdown(f"{tag}{is_fav}**[{entry['title']}]({link})**")
+            st.caption(f"{entry['source_name']} | {entry['published']}")
+
+        with col_fav:
+            if st.button("⭐", key=f"f_{unique_key}"):
+                if link in st.session_state.wichtige_artikel:
+                    st.session_state.wichtige_artikel.remove(link)
+                    update_sheet(link, "wichtig", "remove")
+                else:
+                    st.session_state.wichtige_artikel.add(link)
+                    update_sheet(link, "wichtig", "add")
+                st.rerun()
+        with col_del:
+            if st.button("🗑️", key=f"d_{unique_key}"):
+                st.session_state.geloeschte_artikel.add(link)
+                update_sheet(link, "geloescht", "add")
+                st.rerun()
+        st.divider()
+
+    # Ordner-Anzeige
     aktuelle_quellen = sorted(list(set([e['source_name'] for e in filtered_news])))
-
     for quelle in aktuelle_quellen:
         quell_news = [e for e in filtered_news if e['source_name'] == quelle]
         anzahl_neu = sum(1 for e in quell_news if e['is_new'])
-        
-        label = f"📂 {quelle}" + (f" 🔵 ({anzahl_neu} neu)" if anzahl_neu > 0 else "")
-        
+        label = f"📂 {quelle} " + (f"🔵 ({anzahl_neu})" if anzahl_neu > 0 else "")
         with st.expander(label, expanded=False):
-            for idx, entry in enumerate(quell_news):
-                title = entry.get('title', 'Kein Titel')
-                link = entry.get('link', '#')
-                # Eindeutiger Key durch Kombination aus Index und Quelle
-                unique_key = f"{quelle}_{idx}_{link}"
-                
-                col_text, col_fav, col_del = st.columns([0.8, 0.1, 0.1])
-                with col_text:
-                    new_tag = "🟢 " if entry['is_new'] else ""
-                    is_fav = "⭐ " if link in st.session_state.wichtige_artikel else ""
-                    st.markdown(f"{new_tag}{is_fav}**[{title}]({link})**")
-                    st.caption(f"Datum: {entry.get('published', 'Unbekannt')}")
-
-                with col_fav:
-                    if st.button("⭐", key=f"fav_{unique_key}"):
-                        if link in st.session_state.wichtige_artikel:
-                            st.session_state.wichtige_artikel.remove(link)
-                        else:
-                            st.session_state.wichtige_artikel.add(link)
-                        st.rerun()
-                with col_del:
-                    if st.button("🗑️", key=f"del_{unique_key}"):
-                        st.session_state.geloeschte_artikel.add(link)
-                        st.rerun()
-                st.divider()
+            for i, entry in enumerate(quell_news):
+                render_article(entry, i)
