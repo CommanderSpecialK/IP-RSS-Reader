@@ -28,32 +28,29 @@ if check_password():
 
     if 'wichtige_artikel' not in st.session_state:
         try:
-            # 1. URL laden und ALLES löschen, was kein Buchstabe/Sonderzeichen einer URL ist
-            # Das entfernt unsichtbare BOM-Zeichen oder Excel-Formatierungen
-            raw_url = "".join(char for char in str(st.secrets["gsheets_url"]) if char.isprintable())
-            raw_url = raw_url.strip().replace('"', '').replace("'", "")
+            # URL aus Secrets laden
+            raw_url = str(st.secrets["gsheets_url"]).strip()
             
-            # 2. Die ID finden
-            found_id = re.search(r"/d/([a-zA-Z0-9-_]+)", raw_url)
-            if not found_id:
-                st.error(f"ID-Fehler: Keine gültige ID in '{raw_url}' gefunden.")
-                st.stop()
+            # Sicherstellen, dass die ID extrahiert wird (sucht nach der langen Zeichenfolge)
+            # Die ID ist bei dir: 1KllMIdRunx5n4ntlnEi5f7R2KO9Cumj9L-8YQ_k8al4
+            found_id = re.search(r"([a-zA-Z0-9-_]{30,})", raw_url)
             
-            sheet_id = found_id.group(1)
-            
-            # 3. Direkte Export-Links mit absoluten Parametern
-            url_w = f"https://docs.google.com{sheet_id}/gviz/tq?tqx=out:csv&sheet=wichtig"
-            url_g = f"https://docs.google.com{sheet_id}/gviz/tq?tqx=out:csv&sheet=geloescht"
-            
-            # 4. Laden
-            df_w = pd.read_csv(url_w, on_bad_lines='skip')
-            df_g = pd.read_csv(url_g, on_bad_lines='skip')
-            
-            st.session_state.wichtige_artikel = set(df_w['link'].dropna().astype(str).tolist()) if 'link' in df_w.columns else set()
-            st.session_state.geloeschte_artikel = set(df_g['link'].dropna().astype(str).tolist()) if 'link' in df_g.columns else set()
-            
+            if found_id:
+                sheet_id = found_id.group(1)
+                # Konstruktion der korrekten Google-Abfrage
+                url_w = f"https://docs.google.com{sheet_id}/gviz/tq?tqx=out:csv&sheet=wichtig"
+                url_g = f"https://docs.google.com{sheet_id}/gviz/tq?tqx=out:csv&sheet=geloescht"
+                
+                df_w = pd.read_csv(url_w)
+                df_g = pd.read_csv(url_g)
+                
+                st.session_state.wichtige_artikel = set(df_w['link'].dropna().astype(str).tolist()) if 'link' in df_w.columns else set()
+                st.session_state.geloeschte_artikel = set(df_g['link'].dropna().astype(str).tolist()) if 'link' in df_g.columns else set()
+            else:
+                st.error("Gültige ID im Secret nicht gefunden!")
+                
         except Exception as e:
-            st.error(f"DNS/Verbindungsfehler: {e}")
+            st.error(f"Verbindungsfehler: {e}")
             st.session_state.wichtige_artikel, st.session_state.geloeschte_artikel = set(), set()
 
 
