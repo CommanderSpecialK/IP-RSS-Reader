@@ -42,8 +42,13 @@ def update_cache():
     content = json.dumps(all_entries)
     
     # 3. Zu GitHub hochladen
-    url = f"https://api.github.com/{REPO}/contents/news_cache.json"
-    headers = {"Authorization": f"token {TOKEN}", "Accept": "application/vnd.github.v3+json"}
+    clean_repo = REPO.strip()
+    url = f"https://api.github.com{clean_repo}/contents/news_cache.json"
+    headers = {
+        "Authorization": f"token {TOKEN}", 
+        "Accept": "application/vnd.github.v3+json"
+    }
+    print(f"DEBUG: Sende an URL: {url}")
     
     # Aktuellen SHA holen, falls Datei existiert
     resp = requests.get(url, headers=headers)
