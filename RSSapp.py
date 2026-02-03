@@ -5,12 +5,27 @@ from datetime import datetime, timedelta
 
 # --- 1. PASSWORT & SETUP ---
 def check_password():
-    # (Deine bestehende Passwort-Funktion bleibt hier gleich)
+    """Gibt True zurück, wenn das Passwort korrekt eingegeben wurde."""
     if "password_correct" not in st.session_state:
-        if st.text_input("Bitte Passwort eingeben", type="password", key="password_input") == st.secrets["password"]:
+        st.session_state["password_correct"] = False
+
+    # Falls bereits eingeloggt, direkt True zurückgeben
+    if st.session_state["password_correct"]:
+        return True
+
+    # Login-Formular anzeigen
+    st.title("Sicherer Login")
+    password = st.text_input("Bitte Passwort eingeben", type="password")
+    
+    if st.button("Einloggen") or (password != "" and password == st.secrets["password"]):
+        if password == st.secrets["password"]:
             st.session_state["password_correct"] = True
-        return False
-    return True
+            st.rerun()  # Seite sofort neu laden, um App anzuzeigen
+            return True
+        else:
+            st.error("😕 Passwort falsch")
+            return False
+    return False
 
 if check_password():
     st.set_page_config(page_title="IP RSS Manager", layout="wide")
