@@ -25,14 +25,20 @@ if check_password():
     # 2. PERSISTENTE DATEN LADEN
     if 'wichtige_artikel' not in st.session_state:
         try:
-        # Hier die URL explizit mitgeben
-            df_w = conn.read(spreadsheet=st.secrets["gsheets_url"], worksheet="wichtig", ttl=0)
-            df_g = conn.read(spreadsheet=st.secrets["gsheets_url"], worksheet="geloescht", ttl=0)
-            st.session_state.wichtige_artikel = set(df_w['link'].dropna().tolist())
-            st.session_state.geloeschte_artikel = set(df_g['link'].dropna().tolist())
+            # Wir nutzen st.secrets["gsheets_url"] direkt
+            url = st.secrets["gsheets_url"]
+        
+            # Versuche die Blätter einzeln zu lesen
+            df_w = conn.read(spreadsheet=url, worksheet="wichtig", ttl="0")
+            df_g = conn.read(spreadsheet=url, worksheet="geloescht", ttl="0")
+        
+            # Falls die Spalte 'link' fehlt (Sheet ganz leer), erstelle leere Sets
+            st.session_state.wichtige_artikel = set(df_w['link'].dropna().tolist()) if 'link' in df_w.columns else set()
+            st.session_state.geloeschte_artikel = set(df_g['link'].dropna().tolist()) if 'link' in df_g.columns else set()
         except Exception as e:
-            st.warning(f"Konnte Sheets nicht laden: {e}")
+            st.error(f"Fehler beim Laden: {e}")
             st.session_state.wichtige_artikel, st.session_state.geloeschte_artikel = set(), set()
+
 
     # 3. PARALLELES LADEN DER FEEDS (Der Turbo)
     def fetch_single_feed(row):
