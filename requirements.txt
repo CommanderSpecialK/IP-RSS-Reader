@@ -2,4 +2,3 @@ streamlit
 pandas
 feedparser
 st-files-connection
-st-gsheets-connection
