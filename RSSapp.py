@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import feedparser
+import re
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor
 from streamlit_gsheets import GSheetsConnection
@@ -23,34 +24,36 @@ def check_password():
 
 if check_password():
     # 2. PERSISTENTE DATEN LADEN
+
     if 'wichtige_artikel' not in st.session_state:
         try:
-        # 1. URL aus Secrets holen und säubern
-            raw_url = st.secrets["gsheets_url"].strip()
-        
-            # 2. Die ID extrahieren (zwischen /d/ und /)
-            if "/d/" in raw_url:
-                sheet_id = raw_url.split("/d/")[1].split("/")[0]
-            else:
-                sheet_id = raw_url # Falls nur die ID im Secret steht
-
-            # 3. CSV-Export Links generieren
-            url_w = f"https://docs.google.com{sheet_id}/export?format=csv&gid=0" # Blatt 1
-            # Für das zweite Blatt (geloescht) nutzen wir den Namen:
+            # 1. URL laden und extrem säubern
+            raw_url = str(st.secrets["gsheets_url"]).strip()
+            
+            # 2. Nur die ID extrahieren (Regex findet die lange Kette zwischen /d/ und /)
+            found_id = re.search(r"/d/([a-zA-Z0-9-_]+)", raw_url)
+            if not found_id:
+                st.error("Keine gültige Google Sheet ID in der URL gefunden!")
+                st.stop()
+            
+            sheet_id = found_id.group(1)
+            
+            # 3. Direkte CSV-Links ohne Umwege über Bibliotheken
+            # gid=0 ist meist das erste Blatt (wichtig), sheet=geloescht das zweite
+            url_w = f"https://docs.google.com{sheet_id}/gviz/tq?tqx=out:csv&sheet=wichtig"
             url_g = f"https://docs.google.com{sheet_id}/gviz/tq?tqx=out:csv&sheet=geloescht"
             
-            # 4. Laden mit Pandas (umgeht die gsheets-connection Probleme)
+            # 4. Mit User-Agent laden (manchmal blockt Google einfache Skripte)
             df_w = pd.read_csv(url_w)
             df_g = pd.read_csv(url_g)
             
-            st.session_state.wichtige_artikel = set(df_w['link'].dropna().tolist()) if 'link' in df_w.columns else set()
-            st.session_state.geloeschte_artikel = set(df_g['link'].dropna().tolist()) if 'link' in df_g.columns else set()
+            st.session_state.wichtige_artikel = set(df_w['link'].dropna().astype(str).tolist()) if 'link' in df_w.columns else set()
+            st.session_state.geloeschte_artikel = set(df_g['link'].dropna().astype(str).tolist()) if 'link' in df_g.columns else set()
             
         except Exception as e:
-            st.error(f"Verbindungsfehler: {e}")
+            st.error(f"Kritischer Verbindungsfehler: {e}")
+            st.info("Bitte prüfe, ob die URL in den Secrets korrekt mit https:// beginnt.")
             st.session_state.wichtige_artikel, st.session_state.geloeschte_artikel = set(), set()
-
-
 
 
     # 3. PARALLELES LADEN DER FEEDS (Der Turbo)
