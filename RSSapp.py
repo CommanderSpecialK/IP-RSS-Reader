@@ -22,13 +22,33 @@ def check_password():
 if check_password():
     # --- 2. GITHUB PERSISTENCE LOGIK ---
     def load_from_github(filename):
-        url = f"https://api.github.com{st.secrets['repo_name']}/contents/{filename}"
-        headers = {"Authorization": f"token {st.secrets['github_token']}"}
-        resp = requests.get(url, headers=headers)
-        if resp.status_code == 200:
-            content = base64.b64decode(resp.json()['content']).decode()
-            return set(content.splitlines())
+        try:
+            # Säuberung der Secrets
+            repo = str(st.secrets.get('repo_name', '')).strip()
+            token = str(st.secrets.get('github_token', '')).strip()
+            
+            if not repo or not token:
+                st.warning("Secrets für GitHub fehlen!")
+                return set()
+    
+            url = f"https://api.github.com{repo}/contents/{filename}"
+            headers = {
+                "Authorization": f"token {token}",
+                "Accept": "application/vnd.github.v3+json",
+                "User-Agent": "Streamlit-RSS-App"
+            }
+            
+            # Timeout hinzugefügt, um ewiges Warten zu verhindern
+            resp = requests.get(url, headers=headers, timeout=5)
+            
+            if resp.status_code == 200:
+                content = base64.b64decode(resp.json()['content']).decode()
+                return set(line.strip() for line in content.splitlines() if line.strip())
+        except Exception as e:
+            # Zeige den Fehler nur dezent an, statt abzustürzen
+            st.sidebar.error(f"Verbindung zu GitHub fehlgeschlagen. Offline-Modus aktiv.")
         return set()
+
 
     def save_to_github(filename, links_set):
         url = f"https://api.github.com{st.secrets['repo_name']}/contents/{filename}"
