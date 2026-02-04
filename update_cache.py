@@ -61,9 +61,10 @@ def update_cache():
             # Einfachheitshalber nehmen wir alle, aber begrenzen die Gesamtmenge pro Quelle
             all_entries.append(entry)
 
-    all_entries = sorted(all_entries, key=lambda x: x.get('is_new', False), reverse=True)[:500]
+    all_entries.sort(key=lambda x: x.get('published', ''), reverse=True)
+    all_entries = all_entries[:500]
     
-    print(f"Filter angewendet. Speichere die {len(all_entries)} aktuellsten Artikel.")
+    print(f"Filter angewendet: Die 500 aktuellsten Artikel wurden gespeichert.")
 
     # 3. Upload zu GitHub
     content = json.dumps(all_entries, indent=2)
