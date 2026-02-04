@@ -12,20 +12,56 @@ REPO = os.getenv("REPO_NAME")
 TOKEN = os.getenv("GH_TOKEN")
 
 def fetch_feed(row):
-    """Ruft einen Feed ab und tarnt sich dabei als Browser, um 403-Fehler zu vermeiden."""
+    """Ruft einen Feed ab und nutzt eine Session-Tarnung gegen 403-Fehler."""
+    url = str(row['url']).strip()
+    name = row.get('name', 'Unbekannt')
+    
+    # Erstelle eine Session für stabilere Verbindungen
+    session = requests.Session()
+    session.headers.update({
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+        'Accept-Language': 'de,en-US;q=0.7,en;q=0.3',
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache',
+        'Connection': 'keep-alive',
+    })
+
     try:
-        url = str(row['url']).strip()
-        # Diese Header simulieren einen echten Webbrowser
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
-            'Accept': 'application/rss+xml, application/xml, text/xml, */*'
-        }
-        # Wir laden erst den Inhalt mit den Browser-Headers
-        response = requests.get(url, headers=headers, timeout=15)
+        # 1. Erst die Hauptseite/URL laden, um Cookies zu setzen
+        # Manche WIPO-Server verlangen erst eine Session-Initialisierung
+        resp = session.get(url, timeout=20)
         
-        if response.status_code != 200:
-            print(f"Fehler {response.status_code} bei {row['name']}")
+        if resp.status_code != 200:
+            print(f"Fehler {resp.status_code} bei {name}")
             return []
+
+        # 2. Den Inhalt an feedparser übergeben
+        feed = feedparser.parse(resp.content)
+        now = datetime.now()
+        entries = []
+        
+        for e in feed.entries:
+            pub_parsed = e.get('published_parsed')
+            is_new = False
+            if pub_parsed:
+                dt_pub = datetime(*pub_parsed[:6])
+                is_new = (now - dt_pub).total_seconds() < 172800
+            
+            entries.append({
+                'title': e.get('title', 'Kein Titel'),
+                'link': e.get('link', '#'),
+                'source_name': str(name),
+                'category': str(row.get('category', 'WIPO')),
+                'is_new': is_new,
+                'published': e.get('published', 'Unbekannt'),
+                'pub_sort': list(pub_parsed) if pub_parsed else [1970,1,1,0,0,0,0,0,0]
+            })
+        return entries
+    except Exception as e:
+        print(f"Technischer Fehler bei {name}: {e}")
+        return []
+
 
         # Jetzt erst parsen wir den heruntergeladenen Inhalt
         feed = feedparser.parse(response.content)
