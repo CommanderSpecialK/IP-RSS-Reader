@@ -5,7 +5,6 @@ import base64
 import requests
 import os
 import time
-import random
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 
@@ -14,33 +13,31 @@ REPO = os.getenv("REPO_NAME")
 TOKEN = os.getenv("GH_TOKEN")
 
 def fetch_feed(row):
-    """Ruft einen Feed mit maximaler Browser-Tarnung ab."""
+    """Ruft einen Feed über einen Proxy ab, um GitHub-IP-Sperren (403) zu umgehen."""
     url = str(row['url']).strip()
     name = str(row.get('name', 'Unbekannt'))
     
-    # Zufällige Verzögerung (0-3 Sek), um Rate-Limiting bei WIPO zu umgehen
-    time.sleep(random.uniform(0, 3))
-    
-    session = requests.Session()
-    session.headers.update({
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-        'Accept-Language': 'de,en-US;q=0.7,en;q=0.3',
-        'DNT': '1',
-        'Connection': 'keep-alive',
-        'Upgrade-Insecure-Requests': '1'
-    })
+    # Proxy-Dienst: AllOrigins (maskiert die GitHub-IP)
+    # Die URL muss für den Proxy "gequoted" (encodiert) werden
+    proxy_url = f"https://api.allorigins.win{requests.utils.quote(url)}"
 
     try:
-        # Timeout auf 20s erhöht, da WIPO-Server oft langsam reagieren
-        proxy_url = f"https://api.allorigins.win{requests.utils.quote(url)}"
-        resp = session.get(proxy_url, timeout=25)
+        # Der Proxy liefert ein JSON-Objekt zurück
+        resp = requests.get(proxy_url, timeout=30)
         
         if resp.status_code != 200:
-            print(f"Fehler {resp.status_code} bei {name}")
+            print(f"Proxy-Fehler {resp.status_code} bei {name}")
             return []
-        raw_data = resp.json()['contents']
-        feed = feedparser.parse(raw_data)
+
+        # Extrahiere den eigentlichen Feed-Inhalt aus dem JSON-Feld 'contents'
+        data = resp.json()
+        feed_raw_content = data.get('contents')
+        
+        if not feed_raw_content:
+            print(f"Leerer Inhalt bei {name}")
+            return []
+
+        feed = feedparser.parse(feed_raw_content)
         now = datetime.now()
         entries = []
         
@@ -90,17 +87,16 @@ def update_cache():
 
     # 2. Feeds aus feeds.csv laden
     try:
-        # Versuche verschiedene Separatoren, da CSV oft Semikolon nutzt
         df_feeds = pd.read_csv("feeds.csv", encoding='utf-8-sig', sep=None, engine='python')
     except Exception as e:
         print(f"CSV Fehler: {e}")
         return
 
-    # 3. Parallel abrufen (mit reduzierten Workern gegen IP-Sperre)
-    print(f"Starte Abruf von {len(df_feeds)} Quellen...")
+    # 3. Parallel abrufen
+    print(f"Starte Abruf von {len(df_feeds)} Quellen über Proxy...")
     all_entries = []
-    # Reduziert auf 5 Worker, um nicht wie ein DDoS-Angriff zu wirken
-    with ThreadPoolExecutor(max_workers=5) as executor:
+    # Bei Proxy-Nutzung sind 10 Worker wieder okay
+    with ThreadPoolExecutor(max_workers=10) as executor:
         results = list(executor.map(fetch_feed, [row for _, row in df_feeds.iterrows()]))
     
     # 4. Zusammenführen und Sperrliste beachten
@@ -127,7 +123,7 @@ def update_cache():
     sha = resp_sha.json().get("sha") if resp_sha.status_code == 200 else None
     
     payload = {
-        "message": f"Daily Update: {len(final_data)} items",
+        "message": f"Daily Update via Proxy: {len(final_data)} items",
         "content": base64.b64encode(content.encode("utf-8")).decode("utf-8"),
         "sha": sha
     }
