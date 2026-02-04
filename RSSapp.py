@@ -119,8 +119,11 @@ if check_password():
         if st.button("📁 Alle zuklappen", use_container_width=True):
             st.session_state.expander_state = {k: False for k in st.session_state.expander_state}
             st.rerun()
-            
-        view = st.radio("Ansicht", ["Alle", "EPO", "WIPO", "⭐ Wichtig"])
+                # Profi-Variante: Zeigt nur Kategorien an, die auch wirklich in den Daten existieren
+        vorhandene_kategorien = ["Alle"] + sorted(df['category'].unique().tolist()) + ["⭐ Wichtig"]
+        view = st.radio("Ansicht filtern", vorhandene_kategorien)
+
+        #view = st.radio("Ansicht", ["Alle", "EPO", "WIPO", "⭐ Wichtig"])
         search = st.text_input("🔍 Suche...")
 
     # --- 5. FILTERING ---
