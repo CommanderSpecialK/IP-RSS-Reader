@@ -19,7 +19,7 @@ def fetch_feed(row):
         entries = []
         for e in feed.entries:
             pub = e.get('published_parsed')
-            is_new = (now - datetime(*pub[:6])) < timedelta(hours=24) if pub else False
+            is_new = (now - datetime(*pub[:6])) < timedelta(hours=168) if pub else False
             entries.append({
                 'title': e.get('title', 'Kein Titel'),
                 'link': e.get('link', '#'),
