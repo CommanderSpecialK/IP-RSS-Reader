@@ -126,6 +126,21 @@ if check_password():
     st.header(f"Beiträge: {view}")
     quellen = sorted(list(set([e['source_name'] for e in news])))
 
+    # Wir definieren eine Funktion für die Buttons, um UI von IO zu trennen
+    def handle_click(link, filename, task):
+        if task == "delete":
+            st.session_state.geloeschte_artikel.add(link)
+            # Der Trick: Wir sagen Streamlit, dass es erst UI updatet 
+            # und dann im Hintergrund zu GitHub funkt
+            github_request(filename, "PUT", "\n".join(st.session_state.geloeschte_artikel))
+        elif task == "important":
+            if link in st.session_state.wichtige_artikel:
+                st.session_state.wichtige_artikel.remove(link)
+            else:
+                st.session_state.wichtige_artikel.add(link)
+            github_request(filename, "PUT", "\n".join(st.session_state.wichtige_artikel))
+        st.rerun()
+
     for q in quellen:
         q_news = [e for e in news if e['source_name'] == q]
         anz_neu = sum(1 for e in q_news if e['is_new'])
@@ -145,17 +160,11 @@ if check_password():
                     st.caption(f"{entry['published']}")
                 
                 with col_f:
+                    # Button reagiert schneller durch direkten Funktionsaufruf
                     if st.button("⭐", key=f"f_{unique_key}"):
-                        if link in st.session_state.wichtige_artikel:
-                            st.session_state.wichtige_artikel.remove(link)
-                        else:
-                            st.session_state.wichtige_artikel.add(link)
-                        github_request("wichtig.txt", "PUT", "\n".join(st.session_state.wichtige_artikel))
-                        st.rerun()
+                        handle_click(link, "wichtig.txt", "important")
                 
                 with col_d:
                     if st.button("🗑️", key=f"d_{unique_key}"):
-                        st.session_state.geloeschte_artikel.add(link)
-                        github_request("geloescht.txt", "PUT", "\n".join(st.session_state.geloeschte_artikel))
-                        st.rerun()
+                        handle_click(link, "geloescht.txt", "delete")
                 st.divider()
