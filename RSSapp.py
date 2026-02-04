@@ -7,14 +7,14 @@ import json
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor
 
-# --- 1. SETUP ---
+# --- 1. CONFIG & SETUP ---
 st.set_page_config(page_title="IP RSS FastManager", layout="wide")
 
 def check_password():
     if st.session_state.get("password_correct", False): return True
     st.title("Sicherer Login")
     pwd = st.text_input("Passwort", type="password")
-    if st.button("Einloggen") or (pwd != "" and pwd == st.secrets["password"]):
+    if st.button("Einloggen") or (pwd != "" and pwd == st.secrets.get("password")):
         if pwd == st.secrets.get("password"):
             st.session_state["password_correct"] = True
             st.rerun()
@@ -54,30 +54,24 @@ if check_password():
                      'published': e.get('published', 'Unbekannt')} for e in f.entries]
         except: return []
 
-    # --- 4. INITIALES DATEN-LADEN (Nur beim ersten Start der Session) ---
+    # --- 4. INITIALES DATEN-LADEN ---
     if 'all_news' not in st.session_state:
         with st.status("Initialisierung...", expanded=True) as status:
-            st.write("Lade Listen von GitHub...")
             raw_w, _ = github_request("wichtig.txt")
             st.session_state.wichtige_artikel = set(raw_w.splitlines()) if raw_w else set()
-            
             raw_g, _ = github_request("geloescht.txt")
             st.session_state.geloeschte_artikel = set(raw_g.splitlines()) if raw_g else set()
             
-            st.write("Lade Artikel-Cache...")
             raw_cache, _ = github_request("news_cache.json")
             if raw_cache:
                 st.session_state.all_news = json.loads(raw_cache)
-                st.session_state.data_source = "Cache"
             else:
-                st.write("Kein Cache gefunden, lade Feeds live...")
                 df_feeds = pd.read_csv("feeds.csv", encoding='utf-8-sig', sep=None, engine='python')
                 all_entries = []
                 with ThreadPoolExecutor(max_workers=10) as executor:
                     results = list(executor.map(fetch_feed, [row for _, row in df_feeds.iterrows()]))
                 for res in results: all_entries.extend(res)
                 st.session_state.all_news = all_entries
-                st.session_state.data_source = "Live"
             
             st.session_state.unsaved_changes = False
             status.update(label="Bereit!", state="complete", expanded=False)
@@ -85,43 +79,48 @@ if check_password():
     # --- 5. SIDEBAR ---
     with st.sidebar:
         st.title("📌 IP Manager")
-        st.caption(f"Datenquelle: {st.session_state.get('data_source', 'Unbekannt')}")
-        
         if st.session_state.unsaved_changes:
             st.error("⚠️ Nicht gespeichert!")
             if st.button("💾 JETZT SPEICHERN", type="primary", use_container_width=True):
-                with st.spinner("Speichere..."):
-                    github_request("wichtig.txt", "PUT", "\n".join(list(st.session_state.wichtige_artikel)))
-                    github_request("geloescht.txt", "PUT", "\n".join(list(st.session_state.geloeschte_artikel)))
-                    st.session_state.unsaved_changes = False
-                    st.success("Gespeichert!")
-                    st.rerun()
+                github_request("wichtig.txt", "PUT", "\n".join(list(st.session_state.wichtige_artikel)))
+                github_request("geloescht.txt", "PUT", "\n".join(list(st.session_state.geloeschte_artikel)))
+                st.session_state.unsaved_changes = False
+                st.success("Gespeichert!")
+                st.rerun()
         
         st.divider()
-        if st.button("🔄 Alles live aktualisieren", use_container_width=True):
+        if st.button("🔄 Live Refresh"):
             if 'all_news' in st.session_state: del st.session_state.all_news
+            st.cache_data.clear()
             st.rerun()
         
         view = st.radio("Ansicht", ["Alle", "EPO", "WIPO", "⭐ Wichtig"])
         search = st.text_input("🔍 Suche...")
 
-    # --- 6. ANZEIGE MIT FRAGMENTEN (VERHINDERT AUSGRAUEN) ---
+    # --- 6. FILTERLOGIK (Definition von 'news') ---
+    news = [e for e in st.session_state.all_news if e['link'] not in st.session_state.geloeschte_artikel]
+    if view == "⭐ Wichtig":
+        news = [e for e in news if e['link'] in st.session_state.wichtige_artikel]
+    elif view != "Alle":
+        news = [e for e in news if e['category'] == view]
+    if search:
+        news = [e for e in news if search.lower() in e['title'].lower()]
+
+    # --- 7. ANZEIGE MIT FRAGMENTEN ---
     st.header(f"Beiträge: {view}")
-    
-    # Fragment-Funktion für einen einzelnen Artikel
+
     @st.fragment
     def render_article(entry, i):
         link = entry['link']
         if link in st.session_state.geloeschte_artikel:
-            st.empty() # Artikel verschwindet visuell im Fragment
-            return
+            return st.empty() # Versteckt den Artikel sofort
 
         c1, c2, c3 = st.columns([0.8, 0.1, 0.1])
         with c1:
-            fav_icon = "⭐ " if link in st.session_state.wichtige_artikel else ""
-            neu_icon = "🟢 " if entry['is_new'] else ""
-            st.markdown(f"{neu_icon}{fav_icon}**[{entry['title']}]({link})**")
-            st.caption(f"Datum: {entry.get('published', 'Unbekannt')}")
+            fav = "⭐ " if link in st.session_state.wichtige_artikel else ""
+            neu = "🟢 " if entry['is_new'] else ""
+            st.markdown(f"{neu}{fav}**[{entry['title']}]({link})**")
+            st.caption(f"Quelle: {entry['source_name']} | {entry.get('published', 'N/A')}")
         
         with c2:
             if st.button("⭐", key=f"f_{link}_{i}"):
@@ -130,21 +129,19 @@ if check_password():
                 else:
                     st.session_state.wichtige_artikel.add(link)
                 st.session_state.unsaved_changes = True
-                st.rerun() # Aktualisiert nur das Fragment (Stern erscheint)
+                st.rerun()
         
         with c3:
             if st.button("🗑️", key=f"d_{link}_{i}"):
                 st.session_state.geloeschte_artikel.add(link)
                 st.session_state.unsaved_changes = True
-                st.rerun() # Aktualisiert nur das Fragment (Artikel weg)
+                st.rerun()
 
-    # Ordner-Anzeige
+    # Ordner rendern
     quellen = sorted(list(set([e['source_name'] for e in news])))
     for q in quellen:
         q_news = [e for e in news if e['source_name'] == q]
         anz_neu = sum(1 for e in q_news if e['is_new'])
-        
-        # Wir nutzen den Quellennamen als Key für den Expander, damit er offen bleibt
         with st.expander(f"📂 {q} " + (f"🔵 ({anz_neu})" if anz_neu > 0 else ""), expanded=False):
             for i, entry in enumerate(q_news):
                 render_article(entry, i)
