@@ -19,7 +19,6 @@ def fetch_feed(row):
         entries = []
         for e in feed.entries:
             pub = e.get('published_parsed')
-            # Prüfen, ob der Artikel jünger als 24h ist
             is_new = (now - datetime(*pub[:6])) < timedelta(hours=24) if pub else False
             entries.append({
                 'title': e.get('title', 'Kein Titel'),
@@ -31,72 +30,66 @@ def fetch_feed(row):
             })
         return entries
     except Exception as e:
-        print(f"Fehler bei Feed: {e}")
+        print(f"Fehler bei Feed {row.get('name')}: {e}")
         return []
 
 def update_cache():
     if not REPO or not TOKEN:
-        print("Fehler: Secrets REPO_NAME oder GH_TOKEN fehlen!")
+        print("Fehler: Secrets fehlen!")
         return
 
-    # 1. Feeds laden
+    clean_repo = str(REPO).strip().strip("/")
+    headers = {"Authorization": f"token {TOKEN}", "Accept": "application/vnd.github.v3+json"}
+
+    # 1. Sperrliste (geloescht.txt) von GitHub laden
+    print("Lade Sperrliste...")
+    del_url = f"https://api.github.com/repos/{clean_repo}/contents/geloescht.txt"
+    r_del = requests.get(del_url, headers=headers)
+    sperrliste = set()
+    if r_del.status_code == 200:
+        content_del = base64.b64decode(r_del.json()['content']).decode("utf-8")
+        sperrliste = set(content_del.splitlines())
+
+    # 2. Feeds laden (feeds.csv)
     try:
         df_feeds = pd.read_csv("feeds.csv", encoding='utf-8-sig', sep=None, engine='python')
     except Exception as e:
         print(f"CSV Fehler: {e}")
         return
 
-    # 2. Parallel abrufen
+    # 3. Parallel abrufen
+    print(f"Rufe {len(df_feeds)} Feeds ab...")
     all_entries = []
     with ThreadPoolExecutor(max_workers=10) as executor:
         results = list(executor.map(fetch_feed, [row for _, row in df_feeds.iterrows()]))
     
-    # Ergebnisse flachklopfen (Flatten list of lists)
-    limit_date = datetime.now() - timedelta(days=7)
-    
+    # 4. Filtern: Nur Artikel, die NICHT auf der Sperrliste stehen
     for res in results:
         for entry in res:
-            # Wir prüfen das Datum (falls vorhanden)
-            pub = entry.get('published') 
-            # Einfachheitshalber nehmen wir alle, aber begrenzen die Gesamtmenge pro Quelle
-            all_entries.append(entry)
+            if entry['link'] not in sperrliste:
+                all_entries.append(entry)
 
+    # Sortieren und Limitieren
     all_entries.sort(key=lambda x: x.get('published', ''), reverse=True)
-    all_entries = all_entries[:2000]
+    final_data = all_entries[:2000]
     
-    print(f"Filter angewendet: Die 500 aktuellsten Artikel wurden gespeichert.")
+    print(f"Gefiltert: {len(final_data)} Artikel bereit zum Upload.")
 
-    # 3. Upload zu GitHub
-    content = json.dumps(all_entries, indent=2)
-    clean_repo = str(REPO).strip().strip("/")
-    
-    # KORRIGIERTE URL: /repos/ muss vor dem Namen stehen!
+    # 5. Upload zu GitHub (news_cache.json)
+    content = json.dumps(final_data, indent=2)
     url = f"https://api.github.com/repos/{clean_repo}/contents/news_cache.json"
     
-    headers = {
-        "Authorization": f"token {TOKEN}", 
-        "Accept": "application/vnd.github.v3+json"
-    }
-    
-    # Vorherigen SHA-Key holen, falls die Datei schon existiert (für das Update nötig)
     resp = requests.get(url, headers=headers)
     sha = resp.json().get("sha") if resp.status_code == 200 else None
     
     payload = {
-        "message": "Daily News Cache Update",
-        "content": base64.b64encode(content.encode()).decode()
+        "message": "Daily News Cache Update (Filtered)",
+        "content": base64.b64encode(content.encode("utf-8")).decode("utf-8"),
+        "sha": sha
     }
-    if sha:
-        payload["sha"] = sha
     
-    # Datei hochladen/aktualisieren
     r = requests.put(url, json=payload, headers=headers)
     print(f"GitHub API Status: {r.status_code}")
-    
-    if r.status_code not in [200, 201]:
-        print(f"Details: {r.text}")
-    else:
-        print("Erfolgreich: news_cache.json wurde aktualisiert!")
 
 if __name__ == "__main__":
     update_cache()
