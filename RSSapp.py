@@ -119,9 +119,15 @@ if check_password():
         if st.button("📁 Alle zuklappen", use_container_width=True):
             st.session_state.expander_state = {k: False for k in st.session_state.expander_state}
             st.rerun()
-                # Profi-Variante: Zeigt nur Kategorien an, die auch wirklich in den Daten existieren
-        vorhandene_kategorien = ["Alle"] + sorted(df['category'].unique().tolist()) + ["⭐ Wichtig"]
-        view = st.radio("Ansicht filtern", vorhandene_kategorien)
+            
+        if not st.session_state.all_news_df.empty and 'category' in st.session_state.all_news_df.columns:
+            # Holen der echten Kategorien aus der Datenbank (ohne EPO, wenn es dort gelöscht wurde)
+            kats = sorted([str(k) for k in st.session_state.all_news_df['category'].unique() if k])
+            options = ["Alle"] + kats + ["⭐ Wichtig"]
+        else:
+            options = ["Alle", "⭐ Wichtig"]
+
+        view = st.radio("Ansicht filtern", options)
 
         #view = st.radio("Ansicht", ["Alle", "EPO", "WIPO", "⭐ Wichtig"])
         search = st.text_input("🔍 Suche...")
