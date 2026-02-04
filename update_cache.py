@@ -46,13 +46,19 @@ def update_cache():
         print(f"CSV Fehler: {e}")
         return
 
-    # 2. Parallel abrufen (Turbo-Modus)
+    # 2. Parallel abrufen
     all_entries = []
-    with ThreadPoolExecutor(max_workers=5) as executor:
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        # Wir erstellen eine Liste von Future-Objekten
         results = list(executor.map(fetch_feed, [row for _, row in df_feeds.iterrows()]))
-    for res in results:
-        all_entries.extend(res)
     
+    # Ergebnisse flachklopfen (Flatten list of lists)
+    for res in results:
+        if res: # Nur hinzufügen, wenn der Feed nicht leer war
+            all_entries.extend(res)
+    
+    print(f"Insgesamt {len(all_entries)} Artikel gefunden.")
+
     # 3. Upload zu GitHub
     content = json.dumps(all_entries)
     clean_repo = str(REPO).strip().strip("/")
