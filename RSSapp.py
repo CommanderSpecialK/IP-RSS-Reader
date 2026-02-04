@@ -51,40 +51,37 @@ if check_password():
         return requests.put(url, json=payload, headers=get_gh_headers(), timeout=15).status_code
 
     def sync_and_cleanup():
-        """Löscht Einträge aus dem Cache und synchronisiert GitHub"""
+        """Bereinigt den Cache, behält aber die Löschliste als Schutzschild bei"""
         try:
-            with st.spinner("Bereinige Datenbank und synchronisiere..."):
-                # 1. Aktuelle Daten vorbereiten
+            with st.spinner("Synchronisiere Daten..."):
                 df = st.session_state.all_news_df
                 geloescht_set = st.session_state.geloeschte_artikel
                 
-                # 2. Datenbank bereinigen: Entferne alle Zeilen, deren Link in der Löschliste steht
+                # 1. Aus Cache entfernen (macht die App schnell)
                 if not df.empty and geloescht_set:
                     df_cleaned = df[~df['link'].isin(geloescht_set)]
                 else:
                     df_cleaned = df
 
-                # 3. Dateien für GitHub vorbereiten
+                # 2. news_cache.json schreiben (bereinigt)
                 new_cache_json = df_cleaned.to_dict(orient='records')
-                wichtig_content = "\n".join(sorted(list(st.session_state.wichtige_artikel)))
+                res1 = upload_file("news_cache.json", json.dumps(new_cache_json, indent=2), "DB Cleanup")
                 
-                # 4. Uploads (Sequentiell für Stabilität)
-                # Wir leeren geloescht.txt auf GitHub, da sie im Cache verarbeitet wurden
-                res1 = upload_file("news_cache.json", json.dumps(new_cache_json, indent=2), "Database Cleanup")
-                res2 = upload_file("wichtig.txt", wichtig_content, "Update Favorites")
-                res3 = upload_file("geloescht.txt", "", "Reset Delete List after Sync")
+                # 3. geloescht.txt schreiben (bleibt als Schutzschild erhalten!)
+                geloescht_content = "\n".join(sorted(list(geloescht_set)))
+                res2 = upload_file("geloescht.txt", geloescht_content, "Update Delete List")
+                
+                # 4. wichtig.txt schreiben
+                wichtig_content = "\n".join(sorted(list(st.session_state.wichtige_artikel)))
+                res3 = upload_file("wichtig.txt", wichtig_content, "Update Favorites")
 
-                if res1 in [200, 201] and res2 in [200, 201]:
+                if res1 in and res2 in and res3 in:
                     st.session_state.all_news_df = df_cleaned
-                    st.session_state.geloeschte_artikel = set()
                     st.session_state.unsaved_changes = False
-                    st.success("✅ Datenbank bereinigt und synchronisiert!")
+                    st.success("✅ Synchronisiert! (Cache bereinigt, Schutz aktiv)")
                     time.sleep(1)
                     st.rerun()
-                else:
-                    st.error("Fehler beim Upload. Bitte Logs prüfen.")
-        except Exception as e:
-            st.error(f"Fehler: {e}")
+
 
     # --- 3. INITIALES LADEN ---
     if 'all_news_df' not in st.session_state:
