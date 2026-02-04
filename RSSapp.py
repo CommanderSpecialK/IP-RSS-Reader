@@ -10,7 +10,7 @@ from requests.packages.urllib3.util.retry import Retry
 # --- 1. ROBUSTE HTTP SESSION ---
 def get_safe_session():
     session = requests.Session()
-    retry_strategy = Retry(total=3, backoff_factor=1, status_forcelist=[429, 500, 502, 503, 504])
+    retry_strategy = Retry(total=3, backoff_factor=1, status_forcelist=[500, 502, 503, 504])
     session.mount("https://", HTTPAdapter(max_retries=retry_strategy))
     return session
 
@@ -28,7 +28,7 @@ def check_password():
     return False
 
 if check_password():
-    # --- 3. GITHUB API LOGIK ---
+    # --- 3. GITHUB SYNC LOGIK ---
     def github_sync():
         repo, token = st.secrets['repo_name'].strip(), st.secrets['github_token'].strip()
         headers = {"Authorization": f"token {token}", "Accept": "application/vnd.github.v3+json"}
@@ -49,8 +49,11 @@ if check_password():
         st.session_state.unsaved_changes = False
         st.rerun()
 
-    # --- 4. INITIALES LADEN ---
+    # --- 4. INITIALES LADEN (Mit Fehler-Schema) ---
     if 'all_news_df' not in st.session_state:
+        # Erstelle leeres Dataframe mit Standard-Spalten, um KeyError zu vermeiden
+        default_df = pd.DataFrame(columns=['title', 'link', 'source_name', 'category', 'published'])
+        
         with st.spinner("Lade Daten von GitHub..."):
             repo, token = st.secrets['repo_name'].strip(), st.secrets['github_token'].strip()
             headers = {"Authorization": f"token {token}"}
@@ -60,13 +63,27 @@ if check_password():
                 try:
                     url = f"https://api.github.com{repo}/contents/{fn}"
                     r = session.get(url, headers=headers, timeout=15)
-                    return base64.b64decode(r.json()['content']).decode() if r.status_code == 200 else ""
+                    if r.status_code == 200:
+                        return base64.b64decode(r.json()['content']).decode()
+                    return ""
                 except: return ""
 
             st.session_state.wichtige_artikel = set(load_gh("wichtig.txt").splitlines())
             st.session_state.geloeschte_artikel = set(load_gh("geloescht.txt").splitlines())
+            
             raw_json = load_gh("news_cache.json")
-            st.session_state.all_news_df = pd.DataFrame(json.loads(raw_json)) if raw_json else pd.DataFrame()
+            try:
+                if raw_json:
+                    loaded_data = json.loads(raw_json)
+                    st.session_state.all_news_df = pd.DataFrame(loaded_data)
+                    # Sicherstellen, dass 'link' existiert
+                    if 'link' not in st.session_state.all_news_df.columns:
+                        st.session_state.all_news_df = default_df
+                else:
+                    st.session_state.all_news_df = default_df
+            except:
+                st.session_state.all_news_df = default_df
+            
             st.session_state.unsaved_changes = False
             st.session_state.expander_state = {}
 
@@ -76,19 +93,22 @@ if check_password():
         view = st.radio("Ansicht", ["Alle", "EPO", "WIPO", "⭐ Wichtig"])
         search = st.text_input("🔍 Suche...")
 
-    # --- 6. FILTERING ---
+    # --- 6. FILTERING (Sichere Prüfung) ---
     df = st.session_state.all_news_df.copy()
-    if view == "⭐ Wichtig":
-        df = df[df['link'].isin(st.session_state.wichtige_artikel)]
-    elif view != "Alle":
-        df = df[df['category'] == view]
-    if search:
-        df = df[df['title'].str.contains(search, case=False, na=False)]
+    
+    # Sicherstellen, dass 'link' Spalte existiert bevor gefiltert wird
+    if 'link' in df.columns:
+        df = df[~df['link'].isin(st.session_state.geloeschte_artikel)]
+        if view == "⭐ Wichtig":
+            df = df[df['link'].isin(st.session_state.wichtige_artikel)]
+        elif view != "Alle" and 'category' in df.columns:
+            df = df[df['category'] == view]
+        if search and 'title' in df.columns:
+            df = df[df['title'].str.contains(search, case=False, na=False)]
 
     # --- 7. CONTENT FRAGMENT ---
     @st.fragment
     def render_ui(filtered_df):
-        # SPEICHER-BUTTON DIREKT IM FRAGMENT (REAGIERT SOFORT)
         col_header, col_save = st.columns([0.7, 0.3])
         col_header.header(f"Beiträge: {view}")
         
@@ -98,9 +118,16 @@ if check_password():
         else:
             col_save.button("💾 GESPEICHERT", disabled=True, use_container_width=True)
 
-        display_df = filtered_df[~filtered_df['link'].isin(st.session_state.geloeschte_artikel)]
-        
-        for q, group in display_df.groupby("source_name"):
+        if filtered_df.empty:
+            st.info("Keine Einträge gefunden.")
+            return
+
+        # Sicherstellen, dass source_name existiert
+        if 'source_name' not in filtered_df.columns:
+            st.error("Datenformat fehlerhaft: 'source_name' fehlt.")
+            return
+
+        for q, group in filtered_df.groupby("source_name"):
             exp_key = f"exp_{q}"
             with st.expander(f"📂 {q} ({len(group)})", expanded=st.session_state.expander_state.get(exp_key, False)):
                 st.session_state.expander_state[exp_key] = True
