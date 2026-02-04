@@ -33,13 +33,14 @@ def fetch_feed(row):
 
     try:
         # Timeout auf 20s erhöht, da WIPO-Server oft langsam reagieren
-        resp = session.get(url, timeout=20)
+        proxy_url = f"https://api.allorigins.win{requests.utils.quote(url)}"
+        resp = session.get(proxy_url, timeout=25)
         
         if resp.status_code != 200:
             print(f"Fehler {resp.status_code} bei {name}")
             return []
-
-        feed = feedparser.parse(resp.content)
+        raw_data = resp.json()['contents']
+        feed = feedparser.parse(raw_data)
         now = datetime.now()
         entries = []
         
