@@ -32,36 +32,12 @@
     "published": "Wed, 31 May 1967 09:00:00 GMT"
   },
   {
-    "title": "WERKZEUGMASCHINE UND VERWENDUNG EINER WERKZEUGMASCHINE",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP436119043",
-    "source_name": "CHIRON GROUP",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 31 Jul 2024 08:00:00 GMT"
-  },
-  {
     "title": "VORRICHTUNG ZUR ABSCHRECKUNG VOR WERKST\u00dcCKPOSITIONEN, LASERBEARBEITUNGSVORRICHTUNG UND VERFAHREN ZUR BESTIMMUNG DER WERKST\u00dcCKPOSITION",
     "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP436119034",
     "source_name": "MURATA",
     "category": "WIPO",
     "is_new": false,
     "published": "Wed, 31 Jul 2024 08:00:00 GMT"
-  },
-  {
-    "title": "Werkzeugmaschinen-Steuervorrichtung",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470617655",
-    "source_name": "FANUC",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 31 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "STR\u00d6MUNGSWEGEINHEIT UND K\u00dcHLMITTELSYSTEM",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470617658",
-    "source_name": "FANUC",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 31 Dec 2025 09:00:00 GMT"
   },
   {
     "title": "TISCHVORRICHTUNG EINER WERKZEUGMASCHINE UND WERKZEUGMASCHINE",
@@ -83,238 +59,6 @@
     "title": "VERFAHREN ZUR KORREKTUR DER THERMISCHEN VERLAGERUNG EINER WERKZEUGMASCHINE UND SYSTEM ZUR KORREKTUR DER THERMISCHEN VERLAGERUNG",
     "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP470613042",
     "source_name": "MAKINO",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 31 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "Werkzeuge zum Schneiden von Brennstoffzellenelektroden",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470617304",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 31 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "Verfahren zum Laserschneiden eines Werkst\u00fccks, mit verminderten Schlackeanhaftungen",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470616422",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 31 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "ORBITALSCHWEI\u00dfVERFAHREN UND -VORRICHTUNG ZUR ERZEUGUNG EINER KETTE VON F\u00dcGEPUNKTEN MITTELS SEQUENTIELLEN ERSTARRENS",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470616492",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 31 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "Entgratungseinrichtung",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470617540",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 31 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "Werkzeugmaschinen-Steuervorrichtung",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470617655",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 31 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "Objektiv und Verfahren zum Fokussieren mehrerer Teilstrahlen in mehrere Eindringtiefen einer Probe",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470617287",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 31 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "SCHWEI\u00dfSTROMQUELLE F\u00dcR EINE ORBITALSCHWEI\u00dfVORRICHTUNG MIT EINER ELEKTRONISCHEN SCHALTEINHEIT ZUR SCHWEI\u00dfSTROMREGELUNG",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470616468",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 31 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "Werkzeug zur Aufnahme eines Federd\u00e4mpferbeins",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470617460",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 31 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "Werkzeugverl\u00e4ngerungsstab mit hoher magnetischer Intensit\u00e4t",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470617648",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 31 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "Vorrichtung zum Ausf\u00fchren einer Resektion bei einem Oberschenkel- oder Unterschenkelknochen",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470616327",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 31 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "STR\u00d6MUNGSWEGEINHEIT UND K\u00dcHLMITTELSYSTEM",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470617658",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 31 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "ORBITALSCHWEI\u00dfVORRICHTUNG MIT ZWISCHEN GE\u00d6FFNETER UND GESCHLOSSENER STELLUNG VERSTELLBAREM SCHWEI\u00dfKOPF",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470616467",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 31 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "Odoriertes Brenngasgemisch zur autogenen Bearbeitung von Metallen",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470616344",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 31 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "Verfahren und Vorrichtung zur autogenen Bearbeitung von Metallen mit einem odorierten Brenngas",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470616341",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 31 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "Bohrwerkzeug",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470616855",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 31 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "SCHWEI\u00dfSTROMQUELLE F\u00dcR EINE ORBITALSCHWEI\u00dfVORRICHTUNG MIT EINER EINEN ZWISCHENABGRIFF AUFWEISENDEN SPULE",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470616466",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 31 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "Verfahren zum Verbinden von Bauteilen",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470616868",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 31 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "HALTER, SCHNEIDWERKZEUG UND VERFAHREN ZUR HERSTELLUNG EINES MASCHINELL BEARBEITETEN PRODUKTS",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470617741",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 31 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "Vorrichtung zur Lagerung und Verstellung eines optischen Elements",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470616420",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 31 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "Fassung f\u00fcr eine positionstabile Lagerung eines optischen Elements, entsprechendes Optikmodul und Laseranlage damit",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470616382",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 31 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "F\u00fcgehilfseinrichtung",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470616235",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 31 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "Austauschadaptersystem",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470616223",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 31 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "Handwerkzeugmaschine mit einer Betriebsarterkennung",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470616685",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 31 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "Kupplungsanordnung, Kupplungselement",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470617419",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 31 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "ORBITALSCHWEI\u00dfVERFAHREN UND -VORRICHTUNG ZUR ERZEUGUNG EINER KETTE VON F\u00dcGEPUNKTEN MITTELS UNTERSCHIEDLICHER SCHWEI\u00dfZYKLEN",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470616493",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 31 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "S\u00e4geblatt und Verfahren zum Herstellen desselben",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470616858",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 31 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "Orbitalschwei\u00dfvorrichtung mit Elektroden-Ringsegment",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470616465",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 31 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "Roboter",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470617650",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 31 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "Stufenbohrer",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470617361",
-    "source_name": "B23 Germany 24-28",
     "category": "WIPO",
     "is_new": false,
     "published": "Wed, 31 Dec 2025 09:00:00 GMT"
@@ -350,22 +94,6 @@
     "category": "WIPO",
     "is_new": false,
     "published": "Wed, 30 Oct 2024 09:00:00 GMT"
-  },
-  {
-    "title": "FERTIGUNGSSYSTEM UND ANLAGE ZUR SPANENDEN FERTIGUNG",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP380148687",
-    "source_name": "CHIRON GROUP",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 30 Nov 2022 09:00:00 GMT"
-  },
-  {
-    "title": "KOMBINIERTE TRANSFER- UND SPEICHERVORRICHTUNG SOWIE ANLAGE ZUR SPANENDEN FERTIGUNG",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP380148688",
-    "source_name": "CHIRON GROUP",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 30 Nov 2022 09:00:00 GMT"
   },
   {
     "title": "DREHMASCHINE",
@@ -480,14 +208,6 @@
     "published": "Wed, 29 Oct 2014 09:00:00 GMT"
   },
   {
-    "title": "BEARBEITUNGSZENTRUM",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP429865065",
-    "source_name": "AFW Holding",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 29 May 2024 08:00:00 GMT"
-  },
-  {
     "title": "Numerische Steuervorrichtung",
     "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE429874060",
     "source_name": "FANUC",
@@ -518,14 +238,6 @@
     "category": "WIPO",
     "is_new": false,
     "published": "Wed, 29 Apr 2015 08:00:00 GMT"
-  },
-  {
-    "title": "DOPPELSCHWENKWECHSELADAPTER",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP75225365",
-    "source_name": "BENZ",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 28 Nov 2012 09:00:00 GMT"
   },
   {
     "title": "WERKZEUGREVOLVER",
@@ -560,22 +272,6 @@
     "published": "Wed, 28 Jun 2023 08:00:00 GMT"
   },
   {
-    "title": "WERKZEUGMASCHINE, WERKST\u00dcCKHALTER, ABST\u00dcTZEINHEIT UND HERSTELLVERFAHREN",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP423907729",
-    "source_name": "CHIRON GROUP",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 28 Feb 2024 09:00:00 GMT"
-  },
-  {
-    "title": "WERKST\u00dcCKHALTER, ABST\u00dcTZVORRICHTUNG UND BEARBEITUNGSVERFAHREN",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP423907730",
-    "source_name": "CHIRON GROUP",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 28 Feb 2024 09:00:00 GMT"
-  },
-  {
     "title": "WERKZEUGWECHSELVORRICHTUNG UND BEARBEITUNGSZENTRUM MIT EINER WERKZEUGWECHSELVORRICHTUNG",
     "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP212748917",
     "source_name": "HEDELIUS",
@@ -600,14 +296,6 @@
     "published": "Wed, 28 Aug 2024 08:00:00 GMT"
   },
   {
-    "title": "\u0421\u041f\u041e\u0421\u041e\u0411 \u0418\u0417\u0413\u041e\u0422\u041e\u0412\u041b\u0415\u041d\u0418\u042f \u041f\u041e \u041c\u0415\u041d\u042c\u0428\u0415\u0419 \u041c\u0415\u0420\u0415 \u041e\u0414\u041d\u041e\u0419 \u0414\u0415\u0422\u0410\u041b\u0418, \u0418\u041c\u0415\u042e\u0429\u0415\u0419 \u0424\u041e\u0420\u041c\u0423 \u0414\u0418\u0421\u041a\u0410 \u0418\u041b\u0418 \u041a\u041e\u041b\u042c\u0426\u0410",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EA323245904",
-    "source_name": "AFW Holding",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 28 Apr 2021 08:00:00 GMT"
-  },
-  {
     "title": "VERBINDUNGSVORRICHTUNG",
     "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP322918887",
     "source_name": "SAUTER",
@@ -624,14 +312,6 @@
     "published": "Wed, 27 Sep 2023 08:00:00 GMT"
   },
   {
-    "title": "VERTIKALE DREHBANK MIT MITTELN ZUR KOMPENSATION DER FEHLAUSRICHTUNG VON L\u00c4NGLICHEN F\u00dcHRUNGEN IN Y-RICHTUNG UND VERFAHREN ZUR KOMPENSATION DER FEHLAUSRICHTUNG",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP204137165",
-    "source_name": "BOST",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 27 Sep 2017 08:00:00 GMT"
-  },
-  {
     "title": "Kein Titel",
     "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=GB135559691",
     "source_name": "KOVOSVIT",
@@ -646,14 +326,6 @@
     "category": "WIPO",
     "is_new": false,
     "published": "Wed, 27 Mar 2024 09:00:00 GMT"
-  },
-  {
-    "title": "WERKZEUGMASCHINE",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP370131359",
-    "source_name": "DANOBAT",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 27 Jul 2022 08:00:00 GMT"
   },
   {
     "title": "Improvements in and relating to machine tools",
@@ -678,46 +350,6 @@
     "category": "WIPO",
     "is_new": false,
     "published": "Wed, 27 Aug 2025 08:00:00 GMT"
-  },
-  {
-    "title": "Machine and method for machining large crankshafts",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=CN84600041",
-    "source_name": "BOST",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 27 Apr 2011 08:00:00 GMT"
-  },
-  {
-    "title": "VERSTELLBARES WERKZEUGAGGREGAT",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP14794829",
-    "source_name": "BENZ",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 26 Sep 2007 08:00:00 GMT"
-  },
-  {
-    "title": "AUFSATZELEMENT F\u00dcR EINE WERKZEUGAUFNAHME, SYSTEM, WERKZEUTR\u00c4GER UND VERFAHREN ZUM DURCHF\u00dcHREN EINES WERKZEUGWECHSELS",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP377265012",
-    "source_name": "BENZ",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 26 Oct 2022 08:00:00 GMT"
-  },
-  {
-    "title": "VORRICHTUNG ZUR BESCHICHTUNG VON BREMSSCHEIBEN, UND FERTIGUNGSANLAGE ZUR HERSTELLUNG VON BREMSSCHEIBEN, MIT ZUMINDEST EINER SOLCHEN VORRICHTUNG",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP377265029",
-    "source_name": "CHIRON GROUP",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 26 Oct 2022 08:00:00 GMT"
-  },
-  {
-    "title": "ANLAGE ZUR ADDITIVEN FERTIGUNG",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP377265008",
-    "source_name": "CHIRON GROUP",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 26 Oct 2022 08:00:00 GMT"
   },
   {
     "title": "BER\u00dcHRUNGSSONDE",
@@ -784,30 +416,6 @@
     "published": "Wed, 26 Jan 2022 09:00:00 GMT"
   },
   {
-    "title": "WERKZEUGMASCHINE MIT SCHUTZBALG",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP449770002",
-    "source_name": "CHIRON GROUP",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 26 Feb 2025 09:00:00 GMT"
-  },
-  {
-    "title": "MESSVORRICHTUNG F\u00dcR EINE EISENBAHNRADBEARBEITUNGSDREHMASCHINE, EISENBAHNRADBEARBEITUNGSDREHMASCHINE UND VERFAHREN ZUR MESSUNG EINES EISENBAHNRADES",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP449770977",
-    "source_name": "DANOBAT",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 26 Feb 2025 09:00:00 GMT"
-  },
-  {
-    "title": "UMLAUFENDES ROHRMAGAZIN MIT VERFAHRBAREN SPEICHERDECKELN",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP242571337",
-    "source_name": "BENZ",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 26 Dec 2018 09:00:00 GMT"
-  },
-  {
     "title": "AUSR\u00dcSTUNG ZUM AUSWECHSELN VON AUSTAUSCHBAREN BESTANDTEILEN IN WERKZEUGMASCHINEN",
     "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP75563136",
     "source_name": "GMTK",
@@ -838,14 +446,6 @@
     "category": "WIPO",
     "is_new": false,
     "published": "Wed, 26 Apr 2023 08:00:00 GMT"
-  },
-  {
-    "title": "SYSTEM FLEXIBLER HYDROSTATISCHER F\u00dcHRUNG F\u00dcR VERTIKALDREHMASCHINEN UND VERTIKALDREHMASCHINE MIT EINER DERARTIGEN F\u00dcHRUNG",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP91375155",
-    "source_name": "BOST",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 25 Sep 2013 08:00:00 GMT"
   },
   {
     "title": "M\u00e1quina herramienta para mecanizar una pieza de trabajo y procedimiento para mecanizar la pieza de trabajo",
@@ -928,14 +528,6 @@
     "published": "Wed, 25 Jan 2023 09:00:00 GMT"
   },
   {
-    "title": "EISENBAHNRADBOHRMASCHINE ZUR BEARBEITUNG DER BOHRUNG DER NABE EINES EISENBAHNRADES",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP464110360",
-    "source_name": "DANOBAT",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 24 Sep 2025 08:00:00 GMT"
-  },
-  {
     "title": "VERFAHREN ZUR HERSTELLUNG VON METALLKOMPONENTEN DURCH ABSCHEIDUNG VON MATERIAL UND VORRICHTUNG ZUR DURCHF\u00dcHRUNG DIESES VERFAHRENS",
     "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP232155690",
     "source_name": "KOVOSVIT",
@@ -974,14 +566,6 @@
     "category": "WIPO",
     "is_new": false,
     "published": "Wed, 24 May 2023 08:00:00 GMT"
-  },
-  {
-    "title": "Werkzeugmaschine.",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP11911941",
-    "source_name": "BENZ",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 24 May 1989 08:00:00 GMT"
   },
   {
     "title": "Bearbeitungszentrum",
@@ -1040,262 +624,6 @@
     "published": "Wed, 24 Jul 2024 08:00:00 GMT"
   },
   {
-    "title": "Anzeigevorrichtung f\u00fcr Werkzeugmaschine",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470488561",
-    "source_name": "FANUC",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 24 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "Anzeigevorrichtung und Programm f\u00fcr Werkzeugmaschine",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470488557",
-    "source_name": "FANUC",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 24 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "DICHTUNGSSTRUKTUR, DREHTISCHVORRICHTUNG UND WERKZEUGMASCHINE",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470488566",
-    "source_name": "FANUC",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 24 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "ABDECKELEMENT UND WERKZEUGMASCHINE",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470488565",
-    "source_name": "FANUC",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 24 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "Verfahren zum spanenden Nachbearbeiten eines Schmiederohlings, Verwendung eines solchen Schmiederohlings als Zahnrad-Rohling, Verfahren zum Herstellen eines Zahnrad-Rohlings und Verfahren zum Herstellen eines Zahnrades",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470487624",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 24 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "Laserfokussierungsmechanismus und Laserbearbeitungsausr\u00fcstung",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470488455",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 24 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "WASSERSTRAHL-NIEDERHALTEKLEMMVORRICHTUNG",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470487505",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 24 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "Schrumpfspann-Fluidk\u00fchlvorrichtung, Schrumpfspannstation und Verfahren zu einer K\u00fchlung von Schrumpfspannfuttern",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470487474",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 24 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "Vorrichtung und Verfahren zum Erzeugen eines strukturierten und/oder variablen Stahlprofils",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470487261",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 24 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "Schneideinsatz",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470488321",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 24 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "Schwei\u00dfprozess\u00fcberwachung",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470487176",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 24 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "Mehrfl\u00e4chige Spannvorrichtung f\u00fcr Bearbeitung zum Verspannen mehrererFlugzeugsitzteile",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470488517",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 24 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "FLUIDGEK\u00dcHLTES OPTIKMODUL, LASERANLAGE DAMIT, VERFAHREN ZUM BETREIBEN EINER LASERANLAGE, VERFAHREN ZUM ERZEUGEN EINES PLASMAS EINES TARGETMATERIALS ZUM ERZEUGEN VON SEKUND\u00c4R- STRAHLUNG UND HERSTELLUNGSVERFAHREN ZUM HERSTELLEN VON MIKROCHIPS ODER HALBLEITER-ZWISCHENPRODUKTEN",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470487347",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 24 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "Optische Anordnung zur Laserprojektion, Vorrichtung zur Laserbearbeitung und Verwendung derselben",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470487334",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 24 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "Anzeigevorrichtung f\u00fcr Werkzeugmaschine",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470488561",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 24 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "Bearbeitungsoptik und Verwendung einer Bearbeitungsoptik",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470487449",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 24 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "Verfahren zum Laserschneiden von Blechmaterialien und Computerprogrammprodukt",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470487214",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 24 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "Verfahren zur Reparatur einer Beschichtung eines Hei\u00dfgasbauteils",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470487557",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 24 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "Vorrichtung zum L\u00f6sen von aus einem Blech gelaserten Teilen, Verfahren zum L\u00f6sen von aus einem Blech gelaserten Teilen, Laserschneidmaschine und Schlagschrauber-Hammer",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470487372",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 24 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "Senkwerkzeug",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470487863",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 24 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "Anzeigevorrichtung und Programm f\u00fcr Werkzeugmaschine",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470488557",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 24 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "Mikromechanische Vorrichtung und Verfahren zur Herstellung einer mikromechanischen Vorrichtung mit zumindest einem MEMS-Bauelement, einem MEMS-Substrat, einem Funktionsstrukturen aufweisenden MEMS-Schichtaufbau, einem Kappenteil und einer Druckzugangsstruktur",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470487606",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 24 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "Kugelmagazin f\u00fcr eine Vorrichtung zum L\u00e4ppen und/oder Schleifen von Kugeln",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470487685",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 24 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "Spannvorrichtung f\u00fcr eine Laserbearbeitungsanlage",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470487450",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 24 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "DICHTUNGSSTRUKTUR, DREHTISCHVORRICHTUNG UND WERKZEUGMASCHINE",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470488566",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 24 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "Rotierendes Werkzeug, insbesondere Schraubvorrichtung",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470487539",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 24 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "Bandf\u00fchrung f\u00fcr ein S\u00e4geband und Bands\u00e4ge",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470487249",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 24 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "Schwei\u00dfbedingungsbestimmungsvorrichtung, Schwei\u00dfbedingungsbestimmungsverfahren und Programm",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470488624",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 24 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "Bolzenschneider",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470488502",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 24 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "Vorrichtung zum Spannen mittels Unterdruck",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470487389",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 24 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "ABDECKELEMENT UND WERKZEUGMASCHINE",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470488565",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 24 Dec 2025 09:00:00 GMT"
-  },
-  {
-    "title": "Verfahren zum F\u00fcgen von Bauteilen durch Laserschwei\u00dfen mittels einer Laserschwei\u00dfvorrichtung",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE470488167",
-    "source_name": "B23 Germany 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 24 Dec 2025 09:00:00 GMT"
-  },
-  {
     "title": "MULTIPLE DISC FRICTION CLUTCH",
     "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=GB135602223",
     "source_name": "KOVOSVIT",
@@ -1310,14 +638,6 @@
     "category": "WIPO",
     "is_new": false,
     "published": "Wed, 24 Apr 2024 08:00:00 GMT"
-  },
-  {
-    "title": "BEARBEITUNGSZENTRUM ZUR SPANENDEN BEARBEITUNG EINES L\u00c4NGLICHEN METALLISCHEN WERKST\u00dcCKS",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP441489357",
-    "source_name": "AFW Holding",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 23 Oct 2024 08:00:00 GMT"
   },
   {
     "title": "Kon\u00edk, zvl\u00e1\u0161t\u011b pro obr\u00e1b\u011bc\u00ed stroje",
@@ -1416,14 +736,6 @@
     "published": "Wed, 22 Oct 2025 08:00:00 GMT"
   },
   {
-    "title": "M\u00e1quina herramienta con husillo portaherramientas y p\u00f3rtico de carga",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=ES415081041",
-    "source_name": "CHIRON GROUP",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 22 Nov 2023 09:00:00 GMT"
-  },
-  {
     "title": "VERARBEITUNGSMASCHINE UND SCHIEBEMECHANISMUS",
     "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP394076198",
     "source_name": "DMG Mori",
@@ -1464,14 +776,6 @@
     "published": "Wed, 22 Mar 2023 09:00:00 GMT"
   },
   {
-    "title": "MODULARE SCHNITTSTELLE F\u00dcR WERKZEUGE",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP193433574",
-    "source_name": "BENZ",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 22 Mar 2017 09:00:00 GMT"
-  },
-  {
     "title": "BEARBEITUNGSMASCHINE UND VERFAHREN ZUM WIEDERHERSTELLEN EINER GEBRAUCHTEN TURBINENSCHAUFEL, EINES GEBRAUCHTEN IMPELLERS ODER EINES GEBRAUCHTEN BLISKS",
     "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP174228581",
     "source_name": "HAMUEL Reichenbacher",
@@ -1480,28 +784,12 @@
     "published": "Wed, 22 Jun 2016 08:00:00 GMT"
   },
   {
-    "title": "EISENBAHNRAD-ULTRASCHALLINSPEKTIONSVORRICHTUNG UND EISENBAHNRADBEARBEITUNGSDREHMASCHINE MIT DER VORRICHTUNG",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP447198211",
-    "source_name": "DANOBAT",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 22 Jan 2025 09:00:00 GMT"
-  },
-  {
     "title": "WERKZEUGMASCHINE",
     "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP392330613",
     "source_name": "DMG Mori",
     "category": "WIPO",
     "is_new": false,
     "published": "Wed, 22 Feb 2023 09:00:00 GMT"
-  },
-  {
-    "title": "UMLAUFENDES MEHREBENENROHRMAGAZIN",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP225118066",
-    "source_name": "BENZ",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 22 Aug 2018 08:00:00 GMT"
   },
   {
     "title": "Method and system for laser hardening of a surface of a workpiece",
@@ -1592,14 +880,6 @@
     "published": "Wed, 20 Sep 2023 08:00:00 GMT"
   },
   {
-    "title": "SYSTEM UND VERFAHREN ZUR MASCHINENNAHEN PROGRAMMABLAUFSIMULATION BEI WERKZEUGMASCHINEN",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP425892260",
-    "source_name": "CHIRON GROUP",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 20 Mar 2024 09:00:00 GMT"
-  },
-  {
     "title": "M\u00e9todo y sistema de calentamiento usando un haz de energ\u00eda",
     "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=ES425943811",
     "source_name": "ETXE-TAR",
@@ -1611,14 +891,6 @@
     "title": "WERKZEUGMASCHINE",
     "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP369789231",
     "source_name": "INDEX Werke",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 20 Jul 2022 08:00:00 GMT"
-  },
-  {
-    "title": "FR\u00c4SKOPF MIT HOHER GENAUIGKEIT, FR\u00c4SMASCHINE MIT EINEM FR\u00c4SKOPF UND VERFAHREN ZUR POSITIONIERUNG EINES FR\u00c4SKOPFS MIT HOHER GENAUIGKEIT",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP369790841",
-    "source_name": "SHW Werkzeugmaschinen",
     "category": "WIPO",
     "is_new": false,
     "published": "Wed, 20 Jul 2022 08:00:00 GMT"
@@ -1680,14 +952,6 @@
     "published": "Wed, 19 Oct 2022 08:00:00 GMT"
   },
   {
-    "title": "\u0423\u0421\u0422\u0420\u041e\u0419\u0421\u0422\u0412\u041e \u0414\u041b\u042f \u0412\u042b\u041f\u041e\u041b\u041d\u0415\u041d\u0418\u042f \u041e\u0422\u0412\u0415\u0420\u0421\u0422\u0418\u042f \u0412 \u0414\u0415\u0422\u0410\u041b\u0418",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EA325416026",
-    "source_name": "AFW Holding",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 19 May 2021 08:00:00 GMT"
-  },
-  {
     "title": "SCHMELZETRANSPORTVORRICHTUNG",
     "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP451724554",
     "source_name": "FILL GmbH",
@@ -1734,14 +998,6 @@
     "category": "WIPO",
     "is_new": false,
     "published": "Wed, 19 Feb 1992 09:00:00 GMT"
-  },
-  {
-    "title": "Distribuidor tubular multinivel con sistema de sujeci\u00f3n de cubierta de almacenamiento",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=ES302850819",
-    "source_name": "BENZ",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 19 Aug 2020 08:00:00 GMT"
   },
   {
     "title": "TRANSFORMATOR",
@@ -1824,14 +1080,6 @@
     "published": "Wed, 18 Jan 2017 09:00:00 GMT"
   },
   {
-    "title": "Modulare Schnittstelle f\u00fcr Werkzeuge mit quer zur Axialrichtung wirkenden Strukturpaaren",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP96280624",
-    "source_name": "BENZ",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 18 Dec 2013 09:00:00 GMT"
-  },
-  {
     "title": "VERFAHREN ZUR HERSTELLUNG EINES VERARBEITUNGSPULVERS",
     "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP463736942",
     "source_name": "HERMLE",
@@ -1902,14 +1150,6 @@
     "category": "WIPO",
     "is_new": false,
     "published": "Wed, 17 Jun 1992 08:00:00 GMT"
-  },
-  {
-    "title": "WERKZEUGSPINDEL, WERKZEUGEINHEIT UND WERKZEUGMASCHINE",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP435555230",
-    "source_name": "CHIRON GROUP",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 17 Jul 2024 08:00:00 GMT"
   },
   {
     "title": "SYSTEM ZUR WERKST\u00dcCKBEARBEITUNG, WERKZEUGMASCHINE, TR\u00c4GERVORRICHTUNG UND WERKST\u00dcCKTR\u00c4GER",
@@ -2016,30 +1256,6 @@
     "published": "Wed, 15 Oct 2025 08:00:00 GMT"
   },
   {
-    "title": "Werkzeugmaschine",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=AT465497234",
-    "source_name": "B23 Austria 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 15 Oct 2025 08:00:00 GMT"
-  },
-  {
-    "title": "Schutztrichter f\u00fcr eine Laservorrichtung und Verfahren hierf\u00fcr",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=AT465497189",
-    "source_name": "B23 Austria 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 15 Oct 2025 08:00:00 GMT"
-  },
-  {
-    "title": "BEST\u00dcCKUNGSVORRICHTUNG, WERKZEUGMASCHINE UND VERFAHREN ZUM EINSCHLEUSEN ODER AUSSCHLEUSEN VON WERKZEUGEN",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP414491883",
-    "source_name": "CHIRON GROUP",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 15 Nov 2023 09:00:00 GMT"
-  },
-  {
     "title": "Mitnehmer f\u00fcr Drehbank",
     "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=CH227735746",
     "source_name": "KOVOSVIT",
@@ -2080,22 +1296,6 @@
     "published": "Wed, 15 May 2024 08:00:00 GMT"
   },
   {
-    "title": "Gleitlagerelement",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=AT429019586",
-    "source_name": "B23 Austria 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 15 May 2024 08:00:00 GMT"
-  },
-  {
-    "title": "MODULARE SCHNITTSTELLE F\u00dcR WERKZEUGE",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP77332185",
-    "source_name": "BENZ",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 15 May 2013 08:00:00 GMT"
-  },
-  {
     "title": "Vorrichtung zur Elektroplattierung",
     "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP14336022",
     "source_name": "HAAS",
@@ -2128,30 +1328,6 @@
     "published": "Wed, 15 Jan 2025 09:00:00 GMT"
   },
   {
-    "title": "Zylinderkopfbohrer f\u00fcr eine Scharnierbohrlehre zur Herstellung eines Bohrbildes f\u00fcr Scharniere in einer M\u00f6belplatte",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=AT446435251",
-    "source_name": "B23 Austria 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 15 Jan 2025 09:00:00 GMT"
-  },
-  {
-    "title": "Einrichtung f\u00fcr den Transport von Ladungstr\u00e4gern",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=AT446435247",
-    "source_name": "B23 Austria 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 15 Jan 2025 09:00:00 GMT"
-  },
-  {
-    "title": "Werkzeugmaschine, sowie ein Verfahren zum Betreiben der Werkzeugmaschine",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=AT446435243",
-    "source_name": "B23 Austria 24-28",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 15 Jan 2025 09:00:00 GMT"
-  },
-  {
     "title": "WERKZEUGMASCHINE",
     "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP281664850",
     "source_name": "Reiden Technik",
@@ -2166,14 +1342,6 @@
     "category": "WIPO",
     "is_new": false,
     "published": "Wed, 15 Jan 1992 09:00:00 GMT"
-  },
-  {
-    "title": "WERKZEUGMASCHINE ZUM SCHLEIFEN VON SCHEIBEN",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP391887495",
-    "source_name": "DANOBAT",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 15 Feb 2023 09:00:00 GMT"
   },
   {
     "title": "BEARBEITUNGSVERFAHREN",
@@ -2336,28 +1504,12 @@
     "published": "Wed, 14 Aug 2024 08:00:00 GMT"
   },
   {
-    "title": "VORRICHTUNG ZUM AUSBILDEN EINER BOHRUNG IN EINEM WERKST\u00dcCK",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP407446031",
-    "source_name": "AFW Holding",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 13 Sep 2023 08:00:00 GMT"
-  },
-  {
     "title": "GENERATIVES FERTIGUNGSVERFAHREN ZUM PRODUZIEREN EINES TEILES",
     "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP407445965",
     "source_name": "GF",
     "category": "WIPO",
     "is_new": false,
     "published": "Wed, 13 Sep 2023 08:00:00 GMT"
-  },
-  {
-    "title": "WERKZEUGMASCHINE UND VERFAHREN ZUR BEARBEITUNG VON WERKST\u00dcCKEN",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP442723247",
-    "source_name": "CHIRON GROUP",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 13 Nov 2024 09:00:00 GMT"
   },
   {
     "title": "Kryt, zvl\u00e1\u0161t\u011b kryt pro odd\u011blen\u00ed jednotliv\u00fdch prostor\u016f obr\u00e1b\u011bc\u00edch stroj\u016f",
@@ -2374,38 +1526,6 @@
     "category": "WIPO",
     "is_new": false,
     "published": "Wed, 13 May 1998 08:00:00 GMT"
-  },
-  {
-    "title": "Cabezal de mecanizado para el mandrinado con perfil de botella de una pieza de trabajo",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=ES425334133",
-    "source_name": "AFW Holding",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 13 Mar 2024 09:00:00 GMT"
-  },
-  {
-    "title": "VORRICHTUNG ZUR SP\u00c4NEABF\u00dcHRUNG F\u00dcR EINE WERKZEUGMASCHINE UND FERTIGUNGSSYSTEM",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP425311220",
-    "source_name": "CHIRON GROUP",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 13 Mar 2024 09:00:00 GMT"
-  },
-  {
-    "title": "HANDHABUNGSZELLE F\u00dcR EINE WERKZEUGMASCHINE UND FERTIGUNGSSYSTEM",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP425311219",
-    "source_name": "CHIRON GROUP",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 13 Mar 2024 09:00:00 GMT"
-  },
-  {
-    "title": "WERKZEUGWECHSELVORRICHTUNG F\u00dcR EINE WERKZEUGMASCHINE UND FERTIGUNGSSYSTEM",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP425311218",
-    "source_name": "CHIRON GROUP",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 13 Mar 2024 09:00:00 GMT"
   },
   {
     "title": "HOLZLAMELLENHANDLINGANLAGE, SOWIE EIN VERFAHREN ZUM BETREIBEN DER HOLZLAMELLENHANDLINGANLAGE",
@@ -2536,14 +1656,6 @@
     "published": "Wed, 11 Oct 2023 08:00:00 GMT"
   },
   {
-    "title": "HYBRIDE WERKZEUGMASCHINE F\u00dcR FR\u00c4S- UND BOHRWERKE",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP360599112",
-    "source_name": "CORREA",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 11 May 2022 08:00:00 GMT"
-  },
-  {
     "title": "Z\u00e1sobn\u00edkov\u00fd dr\u017e\u00e1k n\u00e1stroj\u016f",
     "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=CZ298285640",
     "source_name": "KOVOSVIT",
@@ -2608,36 +1720,12 @@
     "published": "Wed, 10 May 2017 08:00:00 GMT"
   },
   {
-    "title": "INSTALACION GENERADORA DE ENERGIA A PARTIR DE BIOMASA",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=ES5628289",
-    "source_name": "CORREA",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 10 Jun 2009 08:00:00 GMT"
-  },
-  {
     "title": "GIESSVORRICHTUNG ZUM GIESSEN EINER SCHMELZE, SOWIE EIN VERFAHREN ZUM GIESSEN EINER SCHMELZE",
     "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP427173868",
     "source_name": "FILL GmbH",
     "category": "WIPO",
     "is_new": false,
     "published": "Wed, 10 Apr 2024 08:00:00 GMT"
-  },
-  {
-    "title": "WERKZEUGAGGREGAT MIT EXZENTERSPANNVORRICHTUNG",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP151504786",
-    "source_name": "BENZ",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 09 Oct 2013 08:00:00 GMT"
-  },
-  {
-    "title": "MASCHINE UND VERFAHREN ZUR MASCHINELLEN BEARBEITUNG VON GROSSEN KURBELWELLEN",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP20834593",
-    "source_name": "BOST",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 09 Feb 2011 09:00:00 GMT"
   },
   {
     "title": "SCHWINGVORRICHTUNG MIT VERSCHIEBBAREN EXZENTERMASSEN",
@@ -2768,14 +1856,6 @@
     "published": "Wed, 08 Feb 2023 09:00:00 GMT"
   },
   {
-    "title": "MODULARE SCHNITTSTELLE F\u00dcR DREHFESTE UND ROTIERENDE WERKZEUGE",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP177406576",
-    "source_name": "BENZ",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 07 Sep 2016 08:00:00 GMT"
-  },
-  {
     "title": "Machine and method for machining ends of crankshafts",
     "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=CN97448480",
     "source_name": "ETXE-TAR",
@@ -2790,22 +1870,6 @@
     "category": "WIPO",
     "is_new": false,
     "published": "Wed, 07 May 2014 08:00:00 GMT"
-  },
-  {
-    "title": "Werkzeugwechselvorrichtung, Werkzeugmaschine und Verfahren zum Wechseln eines Werkzeugs",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE399219390",
-    "source_name": "CHIRON GROUP",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 07 Jun 2023 08:00:00 GMT"
-  },
-  {
-    "title": "WERKZEUGWECHSELVORRICHTUNG, WERKZEUGMASCHINE UND VERFAHREN ZUM WECHSELN EINES WERKZEUGS",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP399208327",
-    "source_name": "CHIRON GROUP",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 07 Jun 2023 08:00:00 GMT"
   },
   {
     "title": "VORRICHTUNG ZUM SPANENDEN BEARBEITEN VON WERKST\u00dcCKEN",
@@ -2832,14 +1896,6 @@
     "published": "Wed, 07 Feb 2001 09:00:00 GMT"
   },
   {
-    "title": "WERKZEUGMASCHINE",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DD98588116",
-    "source_name": "BENZ",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 07 Feb 1990 09:00:00 GMT"
-  },
-  {
     "title": "WERKZEUGMASCHINE, STEUERVORRICHTUNG UND STEUERVERFAHREN DAF\u00dcR",
     "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP380760245",
     "source_name": "DMG Mori",
@@ -2862,14 +1918,6 @@
     "category": "WIPO",
     "is_new": false,
     "published": "Wed, 07 Dec 2022 09:00:00 GMT"
-  },
-  {
-    "title": "WERKZEUGMASCHINE UND HALTEVORRICHTUNG ZUR FELGENBEARBEITUNG",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP436343493",
-    "source_name": "CHIRON GROUP",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 07 Aug 2024 08:00:00 GMT"
   },
   {
     "title": "VIBRATIONSSTEUERUNGSBEARBEITUNGSVERFAHREN F\u00dcR LANGES WERKST\u00dcCK",
@@ -2912,22 +1960,6 @@
     "published": "Wed, 06 Nov 2024 09:00:00 GMT"
   },
   {
-    "title": "System of variable hydrostatic guideway for vertical lathes and a vertical lathe that includes said guideway",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=CN107522450",
-    "source_name": "BOST",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 06 Nov 2013 09:00:00 GMT"
-  },
-  {
-    "title": "Werkzeugaggregat mit Exzenterspannvorrichtung",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=DE106202594",
-    "source_name": "BENZ",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 06 Jun 2012 08:00:00 GMT"
-  },
-  {
     "title": "SPANNFUTTER MIT VERBESSERTEM GREIFHUB",
     "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP367943178",
     "source_name": "HARDINGE",
@@ -2968,22 +2000,6 @@
     "published": "Wed, 06 Apr 2022 08:00:00 GMT"
   },
   {
-    "title": "UMLAUFENDES MEHREBENENROHRMAGAZIN MIT MINDESTENS EINER HALBAUTOMATISCHEN WERKZEUGAUFNAHME",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP225508795",
-    "source_name": "BENZ",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 05 Sep 2018 08:00:00 GMT"
-  },
-  {
-    "title": "MEHREBENENROHRMAGAZIN MIT SPEICHERDECKELSPANNSYSTEM",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP225508796",
-    "source_name": "BENZ",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 05 Sep 2018 08:00:00 GMT"
-  },
-  {
     "title": "Werkzeugmaschine",
     "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP30033767",
     "source_name": "Reiden Technik",
@@ -3008,28 +2024,12 @@
     "published": "Wed, 05 Jul 2023 08:00:00 GMT"
   },
   {
-    "title": "WERKZEUGMASCHINE, FERTIGUNGSANLAGE UND VERFAHREN ZUR BEARBEITUNG VON STANGENMATERIAL",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP447981496",
-    "source_name": "CHIRON GROUP",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 05 Feb 2025 09:00:00 GMT"
-  },
-  {
     "title": "WERKZEUGWECHSELVORRICHTUNG",
     "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP447981497",
     "source_name": "NAKAMURA TOME",
     "category": "WIPO",
     "is_new": false,
     "published": "Wed, 05 Feb 2025 09:00:00 GMT"
-  },
-  {
-    "title": "Schleifaggregat mit einer in einer Schleifspindel angeordneten Exzenterwelle",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP75336166",
-    "source_name": "BENZ",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 05 Dec 2012 09:00:00 GMT"
   },
   {
     "title": "Equipment For The Exchange Of Replaceable Components In Machine Tools",
@@ -3046,14 +2046,6 @@
     "category": "WIPO",
     "is_new": false,
     "published": "Wed, 05 Aug 2009 08:00:00 GMT"
-  },
-  {
-    "title": "L\u00dcNETTE ZUR ABST\u00dcTZUNG EINES MECHANISCH ZU BEARBEITENDEN WERKST\u00dcCKS",
-    "link": "https://patentscope.wipo.int/search/de/detail.jsf?docId=EP394883423",
-    "source_name": "AFW Holding",
-    "category": "WIPO",
-    "is_new": false,
-    "published": "Wed, 05 Apr 2023 08:00:00 GMT"
   },
   {
     "title": "WERKZEUGMASCHINE UND WERKZEUGMASCHINENSTEUERUNGSSYSTEM",
@@ -10750,254 +9742,6 @@
     "category": "EPO",
     "is_new": true,
     "published": "Wed, 04 Feb 2026 05:01:01 GMT"
-  },
-  {
-    "title": "WERKZEUGMASCHINE, FERTIGUNGSANLAGE UND VERFAHREN ZUR BEARBEITUNG VON STANGENMATERIAL",
-    "link": "https://register.epo.org/application?number=EP24191479&lng=de&tab=main",
-    "source_name": "CHIRON",
-    "category": "EPO",
-    "is_new": true,
-    "published": "Wed, 04 Feb 2026 05:01:00 GMT"
-  },
-  {
-    "title": "WERKZEUGMASCHINE UND VERFAHREN ZUR BEARBEITUNG VON WERKST\u00dcCKEN",
-    "link": "https://register.epo.org/application?number=EP24173739&lng=de&tab=main",
-    "source_name": "CHIRON",
-    "category": "EPO",
-    "is_new": true,
-    "published": "Wed, 04 Feb 2026 05:01:00 GMT"
-  },
-  {
-    "title": "WERKZEUGMASCHINE UND HALTEVORRICHTUNG ZUR FELGENBEARBEITUNG",
-    "link": "https://register.epo.org/application?number=EP24155003&lng=de&tab=main",
-    "source_name": "CHIRON",
-    "category": "EPO",
-    "is_new": true,
-    "published": "Wed, 04 Feb 2026 05:01:00 GMT"
-  },
-  {
-    "title": "WERKZEUGMASCHINE UND VERWENDUNG EINER WERKZEUGMASCHINE",
-    "link": "https://register.epo.org/application?number=EP24153786&lng=de&tab=main",
-    "source_name": "CHIRON",
-    "category": "EPO",
-    "is_new": true,
-    "published": "Wed, 04 Feb 2026 05:01:00 GMT"
-  },
-  {
-    "title": "WERKZEUGSPINDEL, WERKZEUGEINHEIT UND WERKZEUGMASCHINE",
-    "link": "https://register.epo.org/application?number=EP23216928&lng=de&tab=main",
-    "source_name": "CHIRON",
-    "category": "EPO",
-    "is_new": true,
-    "published": "Wed, 04 Feb 2026 05:01:00 GMT"
-  },
-  {
-    "title": "SYSTEM UND VERFAHREN ZUR MASCHINENNAHEN PROGRAMMABLAUFSIMULATION BEI WERKZEUGMASCHINEN",
-    "link": "https://register.epo.org/application?number=EP23196809&lng=de&tab=main",
-    "source_name": "CHIRON",
-    "category": "EPO",
-    "is_new": true,
-    "published": "Wed, 04 Feb 2026 05:01:00 GMT"
-  },
-  {
-    "title": "VORRICHTUNG ZUR SP\u00c4NEABF\u00dcHRUNG F\u00dcR EINE WERKZEUGMASCHINE UND FERTIGUNGSSYSTEM",
-    "link": "https://register.epo.org/application?number=EP23196126&lng=de&tab=main",
-    "source_name": "CHIRON",
-    "category": "EPO",
-    "is_new": true,
-    "published": "Wed, 04 Feb 2026 05:01:00 GMT"
-  },
-  {
-    "title": "WERKZEUGWECHSELVORRICHTUNG F\u00dcR EINE WERKZEUGMASCHINE UND FERTIGUNGSSYSTEM",
-    "link": "https://register.epo.org/application?number=EP23196124&lng=de&tab=main",
-    "source_name": "CHIRON",
-    "category": "EPO",
-    "is_new": true,
-    "published": "Wed, 04 Feb 2026 05:01:00 GMT"
-  },
-  {
-    "title": "HANDHABUNGSZELLE F\u00dcR EINE WERKZEUGMASCHINE UND FERTIGUNGSSYSTEM",
-    "link": "https://register.epo.org/application?number=EP23195579&lng=de&tab=main",
-    "source_name": "CHIRON",
-    "category": "EPO",
-    "is_new": true,
-    "published": "Wed, 04 Feb 2026 05:01:00 GMT"
-  },
-  {
-    "title": "SPANNVORRICHTUNG, WERKZEUGMASCHINE, FERTIGUNGSANLAGE UND VERFAHREN ZUR HERSTELLUNG EINES WERKST\u00dcCKS",
-    "link": "https://register.epo.org/application?number=EP23181851&lng=de&tab=main",
-    "source_name": "CHIRON",
-    "category": "EPO",
-    "is_new": true,
-    "published": "Wed, 04 Feb 2026 05:01:00 GMT"
-  },
-  {
-    "title": "BEST\u00dcCKUNGSVORRICHTUNG, WERKZEUGMASCHINE UND VERFAHREN ZUM EINSCHLEUSEN ODER AUSSCHLEUSEN VON WERKZEUGEN",
-    "link": "https://register.epo.org/application?number=EP23171574&lng=de&tab=main",
-    "source_name": "CHIRON",
-    "category": "EPO",
-    "is_new": true,
-    "published": "Wed, 04 Feb 2026 05:01:00 GMT"
-  },
-  {
-    "title": "WERKZEUGMASCHINE MIT SCHUTZBALG",
-    "link": "https://register.epo.org/application?number=EP23719788&lng=de&tab=main",
-    "source_name": "CHIRON",
-    "category": "EPO",
-    "is_new": true,
-    "published": "Wed, 04 Feb 2026 05:01:00 GMT"
-  },
-  {
-    "title": "WERKZEUGWECHSELVORRICHTUNG, WERKZEUGMASCHINE UND VERFAHREN ZUM WECHSELN EINES WERKZEUGS",
-    "link": "https://register.epo.org/application?number=EP22209331&lng=de&tab=main",
-    "source_name": "CHIRON",
-    "category": "EPO",
-    "is_new": true,
-    "published": "Wed, 04 Feb 2026 05:01:00 GMT"
-  },
-  {
-    "title": "AUTOMATIONSMODUL, FERTIGUNGSSYSTEM SOWIE VERFAHREN ZUR BESCHICKUNG EINER WERKZEUGMASCHINE",
-    "link": "https://register.epo.org/application?number=EP22192309&lng=de&tab=main",
-    "source_name": "CHIRON",
-    "category": "EPO",
-    "is_new": true,
-    "published": "Wed, 04 Feb 2026 05:01:00 GMT"
-  },
-  {
-    "title": "KOMBINIERTE TRANSFER- UND SPEICHERVORRICHTUNG SOWIE ANLAGE ZUR SPANENDEN FERTIGUNG",
-    "link": "https://register.epo.org/application?number=EP22174063&lng=de&tab=main",
-    "source_name": "CHIRON",
-    "category": "EPO",
-    "is_new": true,
-    "published": "Wed, 04 Feb 2026 05:01:00 GMT"
-  },
-  {
-    "title": "FERTIGUNGSSYSTEM UND ANLAGE ZUR SPANENDEN FERTIGUNG",
-    "link": "https://register.epo.org/application?number=EP22174060&lng=de&tab=main",
-    "source_name": "CHIRON",
-    "category": "EPO",
-    "is_new": true,
-    "published": "Wed, 04 Feb 2026 05:01:00 GMT"
-  },
-  {
-    "title": "WERKST\u00dcCKHALTER, ABST\u00dcTZVORRICHTUNG UND BEARBEITUNGSVERFAHREN",
-    "link": "https://register.epo.org/application?number=EP22722474&lng=de&tab=main",
-    "source_name": "CHIRON",
-    "category": "EPO",
-    "is_new": true,
-    "published": "Wed, 04 Feb 2026 05:01:00 GMT"
-  },
-  {
-    "title": "WERKZEUGMASCHINE, WERKST\u00dcCKHALTER, ABST\u00dcTZEINHEIT UND HERSTELLVERFAHREN",
-    "link": "https://register.epo.org/application?number=EP22722473&lng=de&tab=main",
-    "source_name": "CHIRON",
-    "category": "EPO",
-    "is_new": true,
-    "published": "Wed, 04 Feb 2026 05:01:00 GMT"
-  },
-  {
-    "title": "ANLAGE ZUR ADDITIVEN FERTIGUNG MIT EINER HANDHABUNGSEINRICHTUNG UND EINEM REINIGUNGSKOPF",
-    "link": "https://register.epo.org/application?number=EP21807018&lng=de&tab=main",
-    "source_name": "CHIRON",
-    "category": "EPO",
-    "is_new": true,
-    "published": "Wed, 04 Feb 2026 05:01:00 GMT"
-  },
-  {
-    "title": "ANLAGE ZUR ADDITIVEN FERTIGUNG",
-    "link": "https://register.epo.org/application?number=EP20838405&lng=de&tab=main",
-    "source_name": "CHIRON",
-    "category": "EPO",
-    "is_new": true,
-    "published": "Wed, 04 Feb 2026 05:01:00 GMT"
-  },
-  {
-    "title": "VORRICHTUNG ZUR BESCHICHTUNG VON BREMSSCHEIBEN, UND FERTIGUNGSANLAGE ZUR HERSTELLUNG VON BREMSSCHEIBEN, MIT ZUMINDEST EINER SOLCHEN VORRICHTUNG",
-    "link": "https://register.epo.org/application?number=EP20838404&lng=de&tab=main",
-    "source_name": "CHIRON",
-    "category": "EPO",
-    "is_new": true,
-    "published": "Wed, 04 Feb 2026 05:01:00 GMT"
-  },
-  {
-    "title": "WERKZEUGMASCHINE MIT PORTAL",
-    "link": "https://register.epo.org/application?number=EP20725136&lng=de&tab=main",
-    "source_name": "CHIRON",
-    "category": "EPO",
-    "is_new": true,
-    "published": "Wed, 04 Feb 2026 05:01:00 GMT"
-  },
-  {
-    "title": "WERKZEUGMASCHINE MIT WERKZEUGSPINDEL UND LADEPORTAL",
-    "link": "https://register.epo.org/application?number=EP19213011&lng=de&tab=main",
-    "source_name": "CHIRON",
-    "category": "EPO",
-    "is_new": true,
-    "published": "Wed, 04 Feb 2026 05:01:00 GMT"
-  },
-  {
-    "title": "VERFAHREN UND VORRICHTUNG F\u00dcR EINE VERSCHLEISSANALYSE AN EINER WERKZEUGMASCHINE",
-    "link": "https://register.epo.org/application?number=EP19195711&lng=de&tab=main",
-    "source_name": "CHIRON",
-    "category": "EPO",
-    "is_new": true,
-    "published": "Wed, 04 Feb 2026 05:01:00 GMT"
-  },
-  {
-    "title": "WERKZEUGMASCHINE",
-    "link": "https://register.epo.org/application?number=EP19762364&lng=de&tab=main",
-    "source_name": "CHIRON",
-    "category": "EPO",
-    "is_new": true,
-    "published": "Wed, 04 Feb 2026 05:01:00 GMT"
-  },
-  {
-    "title": "VORRICHTUNG UND VERFAHREN ZUR \u00dcBERWACHUNG EINES AUFNAHMESTATUS EINES WERKST\u00dcCKS",
-    "link": "https://register.epo.org/application?number=EP19178779&lng=de&tab=main",
-    "source_name": "CHIRON",
-    "category": "EPO",
-    "is_new": true,
-    "published": "Wed, 04 Feb 2026 05:01:00 GMT"
-  },
-  {
-    "title": "VORRICHTUNG ZUM ERMITTELN VON HOCHBELASTETEN POSITIONEN BEI EINER WERKZEUGMASCHINE",
-    "link": "https://register.epo.org/application?number=EP18185498&lng=de&tab=main",
-    "source_name": "CHIRON",
-    "category": "EPO",
-    "is_new": true,
-    "published": "Wed, 04 Feb 2026 05:01:00 GMT"
-  },
-  {
-    "title": "WERKZEUGMASCHINE MIT ZWEI WERKZEUGSPINDELN",
-    "link": "https://register.epo.org/application?number=EP18709541&lng=de&tab=main",
-    "source_name": "CHIRON",
-    "category": "EPO",
-    "is_new": true,
-    "published": "Wed, 04 Feb 2026 05:01:00 GMT"
-  },
-  {
-    "title": "WERKZEUGMASCHINE",
-    "link": "https://register.epo.org/application?number=EP18702213&lng=de&tab=main",
-    "source_name": "CHIRON",
-    "category": "EPO",
-    "is_new": true,
-    "published": "Wed, 04 Feb 2026 05:01:00 GMT"
-  },
-  {
-    "title": "F\u00fcr PDGF-A-Ketten Polypeptiden kodierende, rekombinante DNA",
-    "link": "https://register.epo.org/application?number=EP95105415&lng=de&tab=main",
-    "source_name": "CHIRON",
-    "category": "EPO",
-    "is_new": true,
-    "published": "Wed, 04 Feb 2026 05:01:00 GMT"
-  },
-  {
-    "title": "Rekombinante Herstellung von A-Ketten-Polypeptiden von PDGF",
-    "link": "https://register.epo.org/application?number=EP88303658&lng=de&tab=main",
-    "source_name": "CHIRON",
-    "category": "EPO",
-    "is_new": true,
-    "published": "Wed, 04 Feb 2026 05:01:00 GMT"
   },
   {
     "title": "NUMERISCH GESTEUERTE WERKZEUGMASCHINE UND VERFAHREN ZUR BEARBEITUNG EINES WERKST\u00dcCKS",
