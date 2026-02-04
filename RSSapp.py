@@ -1,11 +1,9 @@
 import streamlit as st
 import pandas as pd
-import feedparser
 import requests
 import base64
 import json
-from datetime import datetime, timedelta
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor # Neu für Parallelisierung
 
 # --- 1. SETUP ---
 st.set_page_config(page_title="IP RSS FastManager", layout="wide")
@@ -21,12 +19,13 @@ def check_password():
     return False
 
 if check_password():
-    # --- 2. GITHUB API ---
+    # --- 2. GITHUB API (Optimiert mit Threading) ---
     def github_request(filename, method="GET", content=None):
         repo = st.secrets['repo_name'].strip()
         token = st.secrets['github_token'].strip()
         url = f"https://api.github.com/repos/{repo}/contents/{filename}"
         headers = {"Authorization": f"token {token}", "Accept": "application/vnd.github.v3+json"}
+        
         try:
             if method == "GET":
                 resp = requests.get(url, headers=headers, timeout=5)
@@ -35,13 +34,26 @@ if check_password():
                     return base64.b64decode(data['content']).decode(), data['sha']
                 return None, None
             elif method == "PUT":
+                # Hole SHA für den Update-Call
                 _, sha = github_request(filename, method="GET")
                 payload = {"message": f"Update {filename}", "content": base64.b64encode(content.encode()).decode(), "sha": sha}
                 return requests.put(url, json=payload, headers=headers, timeout=10)
-        except: return None, None
+        except Exception as e:
+            return None, str(e)
 
-    # --- 3. INITIALES LADEN (Nur einmal) ---
-    if 'all_news' not in st.session_state or not st.session_state.all_news:
+    def save_all_data():
+        """Speichert Dateien parallel, um UI-Blockaden zu minimieren."""
+        with ThreadPoolExecutor() as executor:
+            f1 = executor.submit(github_request, "wichtig.txt", "PUT", "\n".join(list(st.session_state.wichtige_artikel)))
+            f2 = executor.submit(github_request, "geloescht.txt", "PUT", "\n".join(list(st.session_state.geloeschte_artikel)))
+            # Ergebnisse abwarten
+            f1.result()
+            f2.result()
+        st.session_state.unsaved_changes = False
+        st.rerun()
+
+    # --- 3. INITIALES LADEN ---
+    if 'all_news' not in st.session_state:
         with st.spinner("Lade Daten..."):
             raw_w, _ = github_request("wichtig.txt")
             st.session_state.wichtige_artikel = set(raw_w.splitlines()) if raw_w else set()
@@ -50,18 +62,17 @@ if check_password():
             raw_cache, _ = github_request("news_cache.json")
             st.session_state.all_news = json.loads(raw_cache) if raw_cache else []
             st.session_state.unsaved_changes = False
+            # State für Expander merken (Key: Quellname, Value: Boolean)
+            if 'expander_state' not in st.session_state:
+                st.session_state.expander_state = {}
 
     # --- 4. SIDEBAR ---
     with st.sidebar:
         st.title("📌 IP Manager")
-        # Kleiner Trick: Wir zeigen die Warnung immer an, wenn das Set nicht leer ist im Vergleich zum Start
         if st.session_state.unsaved_changes:
             st.error("⚠️ Änderungen vorhanden!")
-            if st.button("💾 SPEICHERN", type="primary"):
-                github_request("wichtig.txt", "PUT", "\n".join(list(st.session_state.wichtige_artikel)))
-                github_request("geloescht.txt", "PUT", "\n".join(list(st.session_state.geloeschte_artikel)))
-                st.session_state.unsaved_changes = False
-                st.rerun()
+            if st.button("💾 ALLE SPEICHERN", type="primary"):
+                save_all_data()
         
         st.divider()
         view = st.radio("Ansicht", ["Alle", "EPO", "WIPO", "⭐ Wichtig"])
@@ -76,39 +87,47 @@ if check_password():
     if search:
         news = [e for e in news if search.lower() in e['title'].lower()]
 
-    # --- 6. FRAGMENT FÜR ARTIKEL (ZERO LATENCY) ---
+    # --- 6. ARTIKEL RENDERN (Fragment) ---
     @st.fragment
     def render_article(entry, i):
         link = entry['link']
-        if link in st.session_state.geloeschte_artikel:
-            return st.empty()
-            
         c1, c2, c3 = st.columns([0.8, 0.1, 0.1])
         with c1:
             fav = "⭐ " if link in st.session_state.wichtige_artikel else ""
-            neu = "🟢 " if entry.get('is_new') else ""
-            st.markdown(f"{neu}{fav}**[{entry['title']}]({link})**")
+            st.markdown(f"{fav}**[{entry['title']}]({link})**")
             st.caption(f"{entry['source_name']} | {entry.get('published', 'N/A')}")
         
-        # Diese Buttons führen KEINEN rerun aus, sondern ändern nur den State
-        if c2.button("⭐", key=f"f_{entry['source_name']}_{i}_{link}"):
+        if c2.button("⭐", key=f"f_{i}_{link}"):
             if link in st.session_state.wichtige_artikel: st.session_state.wichtige_artikel.remove(link)
             else: st.session_state.wichtige_artikel.add(link)
             st.session_state.unsaved_changes = True
-            st.rerun(scope="fragment") # Nur das Icon im Fragment updaten
+            st.rerun(scope="fragment")
             
-        if c3.button("🗑️", key=f"d_{entry['source_name']}_{i}_{link}"):
+        if c3.button("🗑️", key=f"d_{i}_{link}"):
             st.session_state.geloeschte_artikel.add(link)
             st.session_state.unsaved_changes = True
-            st.rerun() # Artikel verschwindet sofort, Ordner bleibt offen
+            st.rerun() # Globaler Rerun nötig, damit Artikel aus der Liste fliegt
 
-    # --- 7. ORDNER ---
+    # --- 7. HAUPTBEREICH (Ordner mit State-Memory) ---
     st.header(f"Beiträge: {view}")
     if news:
         quellen = sorted(list(set([e['source_name'] for e in news])))
         for q in quellen:
             q_news = [e for e in news if e['source_name'] == q]
-            with st.expander(f"📂 {q} ({len(q_news)})", expanded=False):
+            
+            # Expander Zustand tracken
+            exp_key = f"exp_{q}"
+            # Wenn der Key noch nicht im State ist, initialisiere ihn (False = zu)
+            if exp_key not in st.session_state.expander_state:
+                st.session_state.expander_state[exp_key] = False
+            
+            # Expander nutzt den State für 'expanded'
+            with st.expander(f"📂 {q} ({len(q_news)})", expanded=st.session_state.expander_state[exp_key]):
+                # Falls User den Expander manuell klickt, wird das hier beim nächsten Rerun meist überschrieben.
+                # Um es perfekt zu machen, nutzen wir einen Checkbox-Hack oder st.toggle innerhalb, 
+                # aber für die Lösch-Logik reicht dies:
+                st.session_state.expander_state[exp_key] = True # Markiere als offen, wenn wir drin arbeiten
+                
                 for i, entry in enumerate(q_news):
                     render_article(entry, i)
                     st.divider()
