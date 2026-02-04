@@ -104,6 +104,7 @@ if check_password():
     # --- 6. FRAGMENT ---
     @st.fragment
     def render_article(title, link, pub, source, idx):
+        # Falls der Link bereits im Lösch-Set ist, nichts anzeigen
         if link in st.session_state.geloeschte_artikel:
             return st.empty()
 
@@ -113,16 +114,20 @@ if check_password():
         c1.markdown(f"{'⭐ ' if is_fav else ''}**[{title}]({link})**")
         c1.caption(f"{pub} | {source}")
         
+        # Favorit: Nur Fragment-Rerun reicht hier völlig
         if c2.button("⭐", key=f"f_{idx}"):
             if is_fav: st.session_state.wichtige_artikel.remove(link)
             else: st.session_state.wichtige_artikel.add(link)
             st.session_state.unsaved_changes = True
-            st.rerun(scope="fragment")
+            st.rerun(scope="fragment") 
             
+        # Löschen: Globaler Rerun, damit der Speicher-Button in der Sidebar erscheint
         if c3.button("🗑️", key=f"d_{idx}"):
             st.session_state.geloeschte_artikel.add(link)
             st.session_state.unsaved_changes = True
-            st.rerun(scope="fragment")
+            # WICHTIG: Kein scope="fragment", damit die Sidebar mit-aktualisiert wird
+            st.rerun() 
+
 
     # --- 7. DISPLAY ---
     st.header(f"Beiträge: {view}")
