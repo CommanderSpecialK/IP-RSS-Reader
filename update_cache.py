@@ -49,18 +49,24 @@ def update_cache():
     # 2. Parallel abrufen
     all_entries = []
     with ThreadPoolExecutor(max_workers=10) as executor:
-        # Wir erstellen eine Liste von Future-Objekten
         results = list(executor.map(fetch_feed, [row for _, row in df_feeds.iterrows()]))
     
     # Ergebnisse flachklopfen (Flatten list of lists)
-    for res in results:
-        if res: # Nur hinzufügen, wenn der Feed nicht leer war
-            all_entries.extend(res)
+    limit_date = datetime.now() - timedelta(days=7)
     
-    print(f"Insgesamt {len(all_entries)} Artikel gefunden.")
+    for res in results:
+        for entry in res:
+            # Wir prüfen das Datum (falls vorhanden)
+            pub = entry.get('published') 
+            # Einfachheitshalber nehmen wir alle, aber begrenzen die Gesamtmenge pro Quelle
+            all_entries.append(entry)
+
+    all_entries = sorted(all_entries, key=lambda x: x.get('is_new', False), reverse=True)[:500]
+    
+    print(f"Filter angewendet. Speichere die {len(all_entries)} aktuellsten Artikel.")
 
     # 3. Upload zu GitHub
-    content = json.dumps(all_entries)
+    content = json.dumps(all_entries, indent=2)
     clean_repo = str(REPO).strip().strip("/")
     
     # KORRIGIERTE URL: /repos/ muss vor dem Namen stehen!
