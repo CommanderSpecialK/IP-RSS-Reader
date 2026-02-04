@@ -15,7 +15,7 @@ TOKEN = os.getenv("GH_TOKEN")
 def fetch_feed(row):
     """Ruft einen Feed über einen Proxy ab, um GitHub-IP-Sperren (403) zu umgehen."""
     url = str(row['url']).strip()
-    name = str(row.get('name', 'Unbekannt'))
+    name = str(row.get/('name', 'Unbekannt'))
     
     # Proxy-Dienst: AllOrigins (maskiert die GitHub-IP)
     # Die URL muss für den Proxy "gequoted" (encodiert) werden
