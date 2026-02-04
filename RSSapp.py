@@ -26,7 +26,7 @@ if check_password():
         repo = st.secrets['repo_name'].strip()
         token = st.secrets['github_token'].strip()
         # KORREKT: Der Schrägstrich nach /repos/
-        url = f"https://api.github.com/{repo}/contents/{filename}"
+        url = f"https://api.github.com/repos/{repo}/contents/{filename}"
         headers = {
             "Authorization": f"token {token}",
             "Accept": "application/vnd.github.v3+json"
@@ -35,7 +35,7 @@ if check_password():
     def get_cache_time():
         repo = st.secrets['repo_name'].strip()
         token = st.secrets['github_token'].strip()
-        url = f"https://api.github.com{repo}/contents/news_cache.json"
+        url = f"https://api.github.com/repos/{repo}/contents/news_cache.json"
         headers = {"Authorization": f"token {token}"}
         
         resp = requests.get(url, headers=headers)
