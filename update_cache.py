@@ -62,7 +62,7 @@ def update_cache():
             all_entries.append(entry)
 
     all_entries.sort(key=lambda x: x.get('published', ''), reverse=True)
-    all_entries = all_entries[:500]
+    all_entries = all_entries[:2000]
     
     print(f"Filter angewendet: Die 500 aktuellsten Artikel wurden gespeichert.")
 
