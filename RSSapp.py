@@ -78,19 +78,25 @@ if check_password():
 
     @st.cache_data(ttl=3600)
     def load_news_data():
-        # Versuche Cache zu laden
+        # 1. Versuche, den schnellen Cache von GitHub zu laden
         raw_cache, _ = github_request("news_cache.json")
         if raw_cache:
-            try: return json.loads(raw_cache)
-            except: pass
-            
-        # Falls kein Cache, live laden
+            try:
+                st.sidebar.success("🚀 Daten aus Cache geladen")
+                return json.loads(raw_cache)
+            except Exception as e:
+                st.sidebar.warning(f"Cache-Fehler: {e}")
+        
+        # 2. Fallback: Live laden (nur wenn kein Cache da ist oder Fehler auftritt)
+        st.sidebar.info("📡 Lade Feeds live (kein Cache gefunden)...")
         df_feeds = pd.read_csv("feeds.csv", encoding='utf-8-sig', sep=None, engine='python')
         all_entries = []
         with ThreadPoolExecutor(max_workers=10) as executor:
             results = list(executor.map(fetch_feed, [row for _, row in df_feeds.iterrows()]))
-        for res in results: all_entries.extend(res)
+        for res in results: 
+            all_entries.extend(res)
         return all_entries
+
 
     all_news = load_news_data()
 
