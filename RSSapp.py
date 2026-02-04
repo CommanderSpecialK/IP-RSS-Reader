@@ -19,7 +19,7 @@ def check_password():
     return False
 
 if check_password():
-    # --- 2. GITHUB API (Parallel) ---
+    # --- 2. GITHUB API ---
     def safe_github_request(filename, method="GET", content=None):
         repo, token = st.secrets['repo_name'].strip(), st.secrets['github_token'].strip()
         url = f"https://api.github.com/repos/{repo}/contents/{filename}"
@@ -56,67 +56,69 @@ if check_password():
     # --- 4. SIDEBAR ---
     with st.sidebar:
         st.title("📌 IP Manager")
-        # Button reagiert sofort auf unsaved_changes
-        st.button("💾 SPEICHERN", type="primary", use_container_width=True, 
-                  disabled=not st.session_state.unsaved_changes, on_click=save_data_callback)
+        # Platzhalter für den dynamischen Button
+        save_placeholder = st.empty()
+        if st.session_state.unsaved_changes:
+            save_placeholder.button("💾 SPEICHERN", type="primary", use_container_width=True, on_click=save_data_callback)
+        else:
+            save_placeholder.button("💾 SPEICHERN", disabled=True, use_container_width=True)
+            
         st.divider()
         view = st.radio("Ansicht", ["Alle", "EPO", "WIPO", "⭐ Wichtig"])
         search = st.text_input("🔍 Suche...")
 
-    # --- 5. FILTERING (Pandas) ---
-    # Wir filtern direkt hier (sehr schnell)
+    # --- 5. FILTERING (Vorbereitung für Fragment) ---
     df = st.session_state.df.copy()
-    df = df[~df['link'].isin(st.session_state.geloeschte_artikel)]
-    if view == "⭐ Wichtig": df = df[df['link'].isin(st.session_state.wichtige_artikel)]
-    elif view != "Alle": df = df[df['category'] == view]
-    if search: df = df[df['title'].str.contains(search, case=False, na=False)]
+    if view == "⭐ Wichtig": 
+        df = df[df['link'].isin(st.session_state.wichtige_artikel)]
+    elif view != "Alle": 
+        df = df[df['category'] == view]
+    if search: 
+        df = df[df['title'].str.contains(search, case=False, na=False)]
 
-    # --- 6. DISPLAY LOGIK ---
-    st.header(f"Beiträge: {view} ({len(df)})")
-    
-    if not df.empty:
-        for q, group in df.groupby("source_name"):
+    # --- 6. DAS ULTRA-FAST FRAGMENT ---
+    @st.fragment
+    def render_fast_list(filtered_df):
+        # Filtere gelöschte Artikel LOKAL im Fragment
+        display_df = filtered_df[~filtered_df['link'].isin(st.session_state.geloeschte_artikel)]
+        
+        if display_df.empty:
+            st.info("Keine Artikel gefunden.")
+            return
+
+        for q, group in display_df.groupby("source_name"):
             exp_key = f"exp_{q}"
-            # Expander-State Management
             with st.expander(f"📂 {q} ({len(group)})", expanded=st.session_state.expander_state.get(exp_key, False)):
                 st.session_state.expander_state[exp_key] = True
                 
-                # --- Alle löschen Button ---
-                c_info, c_bulk = st.columns([0.7, 0.3])
-                if c_bulk.button(f"🗑️ Alle in {q} löschen", key=f"bulk_{q}"):
+                # Bulk Delete Button
+                if st.button(f"🗑️ Alle in {q} löschen", key=f"bulk_{q}"):
                     st.session_state.geloeschte_artikel.update(group['link'].tolist())
                     st.session_state.unsaved_changes = True
-                    st.rerun() # Globaler Rerun für Sidebar & UI-Update
-                
+                    st.rerun() # Hier globaler Rerun nötig für Sidebar-Sync
+
                 st.divider()
 
-                # --- Artikel Liste ---
                 for i, row in group.iterrows():
                     link = row['link']
+                    # UI Element
                     c1, c2, c3 = st.columns([0.8, 0.1, 0.1])
                     is_fav = link in st.session_state.wichtige_artikel
-                    
                     c1.markdown(f"{'⭐ ' if is_fav else ''}**[{row['title']}]({link})**")
                     c1.caption(f"{row.get('published','')} | {q}")
                     
-                    # Favorit (Fragment für Speed)
-                    @st.fragment
-                    def fav_btn(l=link, idx=i):
-                        if st.button("⭐", key=f"f_{idx}"):
-                            if l in st.session_state.wichtige_artikel: st.session_state.wichtige_artikel.remove(l)
-                            else: st.session_state.wichtige_artikel.add(l)
-                            st.session_state.unsaved_changes = True
-                            st.rerun() # Global, damit Sidebar reagiert
-                    
-                    # Löschen (Globaler Rerun für Sidebar-Update)
-                    def del_btn(l=link, idx=i):
-                        if st.button("🗑️", key=f"d_{idx}"):
-                            st.session_state.geloeschte_artikel.add(l)
-                            st.session_state.unsaved_changes = True
-                            st.rerun() # Global Rerun
-                    
-                    with c2: fav_btn()
-                    with c3: del_btn()
-                    st.divider()
-    else:
-        st.info("Keine Einträge.")
+                    if c2.button("⭐", key=f"f_{q}_{i}"):
+                        if is_fav: st.session_state.wichtige_artikel.remove(link)
+                        else: st.session_state.wichtige_artikel.add(link)
+                        st.session_state.unsaved_changes = True
+                        st.rerun(scope="fragment") # Schnell!
+                        
+                    if c3.button("🗑️", key=f"d_{q}_{i}"):
+                        st.session_state.geloeschte_artikel.add(link)
+                        st.session_state.unsaved_changes = True
+                        st.rerun(scope="fragment") # SOFORT-Löschen!
+
+    # --- 7. START ---
+    st.header(f"Beiträge: {view}")
+    render_fast_list(df)
+
