@@ -7,7 +7,7 @@ import json
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor
 
-# --- 1. CONFIG & SETUP ---
+# --- 1. SETUP ---
 st.set_page_config(page_title="IP RSS FastManager", layout="wide")
 
 def check_password():
@@ -40,96 +40,75 @@ if check_password():
                 return requests.put(url, json=payload, headers=headers, timeout=10)
         except: return None, None
 
-    # --- 3. INITIALES LADEN ---
-    if 'all_news' not in st.session_state or not st.session_state.all_news:
-        with st.spinner("Synchronisiere mit GitHub..."):
+    # --- 3. INITIALES LADEN (Nur einmal) ---
+    if 'all_news' not in st.session_state:
+        with st.spinner("Lade Daten..."):
             raw_w, _ = github_request("wichtig.txt")
             st.session_state.wichtige_artikel = set(raw_w.splitlines()) if raw_w else set()
             raw_g, _ = github_request("geloescht.txt")
             st.session_state.geloeschte_artikel = set(raw_g.splitlines()) if raw_g else set()
-            
             raw_cache, _ = github_request("news_cache.json")
-            if raw_cache:
-                st.session_state.all_news = json.loads(raw_cache)
-            else:
-                st.session_state.all_news = []
+            st.session_state.all_news = json.loads(raw_cache) if raw_cache else []
             st.session_state.unsaved_changes = False
 
     # --- 4. SIDEBAR ---
     with st.sidebar:
         st.title("📌 IP Manager")
-        
-        # Der Speicher-Button erscheint hier wieder zuverlässig
+        # Kleiner Trick: Wir zeigen die Warnung immer an, wenn das Set nicht leer ist im Vergleich zum Start
         if st.session_state.unsaved_changes:
-            st.error("⚠️ Nicht gespeichert!")
-            if st.button("💾 JETZT SPEICHERN", type="primary", use_container_width=True):
-                with st.spinner("Speichere..."):
-                    github_request("wichtig.txt", "PUT", "\n".join(list(st.session_state.wichtige_artikel)))
-                    github_request("geloescht.txt", "PUT", "\n".join(list(st.session_state.geloeschte_artikel)))
-                    st.session_state.unsaved_changes = False
-                    st.success("Gespeichert!")
-                    st.rerun()
-        else:
-            st.success("✅ Alles synchron")
+            st.error("⚠️ Änderungen vorhanden!")
+            if st.button("💾 SPEICHERN", type="primary"):
+                github_request("wichtig.txt", "PUT", "\n".join(list(st.session_state.wichtige_artikel)))
+                github_request("geloescht.txt", "PUT", "\n".join(list(st.session_state.geloeschte_artikel)))
+                st.session_state.unsaved_changes = False
+                st.rerun()
         
         st.divider()
         view = st.radio("Ansicht", ["Alle", "EPO", "WIPO", "⭐ Wichtig"])
         search = st.text_input("🔍 Suche...")
 
     # --- 5. FILTERLOGIK ---
-    all_articles = st.session_state.all_news
-    news = [e for e in all_articles if e['link'] not in st.session_state.geloeschte_artikel]
-    
+    news = [e for e in st.session_state.all_news if e['link'] not in st.session_state.geloeschte_artikel]
     if view == "⭐ Wichtig":
         news = [e for e in news if e['link'] in st.session_state.wichtige_artikel]
     elif view != "Alle":
         news = [e for e in news if e['category'] == view]
-    
     if search:
         news = [e for e in news if search.lower() in e['title'].lower()]
 
-    # --- 6. ANZEIGE ---
-    st.header(f"Beiträge: {view}")
-
-    # Funktion für Klicks (sorgt für schnelles UI Update)
-    def handle_interaction(link, type):
-        if type == "important":
-            if link in st.session_state.wichtige_artikel:
-                st.session_state.wichtige_artikel.remove(link)
-            else:
-                st.session_state.wichtige_artikel.add(link)
-        elif type == "delete":
-            st.session_state.geloeschte_artikel.add(link)
+    # --- 6. FRAGMENT FÜR ARTIKEL (ZERO LATENCY) ---
+    @st.fragment
+    def render_article(entry, i):
+        link = entry['link']
+        if link in st.session_state.geloeschte_artikel:
+            return st.empty()
+            
+        c1, c2, c3 = st.columns([0.8, 0.1, 0.1])
+        with c1:
+            fav = "⭐ " if link in st.session_state.wichtige_artikel else ""
+            neu = "🟢 " if entry.get('is_new') else ""
+            st.markdown(f"{neu}{fav}**[{entry['title']}]({link})**")
+            st.caption(f"{entry['source_name']} | {entry.get('published', 'N/A')}")
         
-        st.session_state.unsaved_changes = True
-        st.rerun() # Wir brauchen ein globales Rerun für die Sidebar-Warnung
+        # Diese Buttons führen KEINEN rerun aus, sondern ändern nur den State
+        if c2.button("⭐", key=f"f_{link}_{i}"):
+            if link in st.session_state.wichtige_artikel: st.session_state.wichtige_artikel.remove(link)
+            else: st.session_state.wichtige_artikel.add(link)
+            st.session_state.unsaved_changes = True
+            st.rerun(scope="fragment") # Nur das Icon im Fragment updaten
+            
+        if c3.button("🗑️", key=f"d_{link}_{i}"):
+            st.session_state.geloeschte_artikel.add(link)
+            st.session_state.unsaved_changes = True
+            st.rerun(scope="fragment") # Artikel verschwindet sofort, Ordner bleibt offen
 
-    # Ordner rendern
+    # --- 7. ORDNER ---
+    st.header(f"Beiträge: {view}")
     if news:
         quellen = sorted(list(set([e['source_name'] for e in news])))
         for q in quellen:
             q_news = [e for e in news if e['source_name'] == q]
-            anz_neu = sum(1 for e in q_news if e['is_new'])
-            
-            # Expander mit festem Key bleibt meistens über Reruns hinweg stabil
-            with st.expander(f"📂 {q} ({len(q_news)})" + (f" 🔵 ({anz_neu})" if anz_neu > 0 else ""), expanded=False):
+            with st.expander(f"📂 {q} ({len(q_news)})", expanded=False):
                 for i, entry in enumerate(q_news):
-                    link = entry['link']
-                    
-                    c1, c2, c3 = st.columns([0.8, 0.1, 0.1])
-                    with c1:
-                        fav = "⭐ " if link in st.session_state.wichtige_artikel else ""
-                        neu = "🟢 " if entry.get('is_new') else ""
-                        st.markdown(f"{neu}{fav}**[{entry['title']}]({link})**")
-                        st.caption(f"{entry['source_name']} | {entry.get('published', 'N/A')}")
-                    
-                    with c2:
-                        if st.button("⭐", key=f"f_{q}_{i}_{link}"):
-                            handle_interaction(link, "important")
-                    
-                    with c3: # Falls col3 Fehler wirft, c3 nutzen
-                        if st.button("🗑️", key=f"d_{q}_{i}_{link}"):
-                            handle_interaction(link, "delete")
+                    render_article(entry, i)
                     st.divider()
-    else:
-        st.info("Keine Artikel gefunden.")
