@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor
 
 # --- 1. CONFIG & SETUP ---
-st.set_page_config(page_title="IP RSS Manager", layout="wide")
+st.set_page_config(page_title="IP RSS FastManager", layout="wide")
 
 def check_password():
     if st.session_state.get("password_correct", False): return True
@@ -21,68 +21,54 @@ def check_password():
     return False
 
 if check_password():
-    # --- 2. GITHUB STORAGE LOGIK ---
+    # --- 2. OPTIMIERTE GITHUB LOGIK ---
     def github_request(filename, method="GET", content=None):
         repo = st.secrets['repo_name'].strip()
         token = st.secrets['github_token'].strip()
         url = f"https://api.github.com/repos/{repo}/contents/{filename}"
-        headers = {
-            "Authorization": f"token {token}",
-            "Accept": "application/vnd.github.v3+json"
-        }
+        headers = {"Authorization": f"token {token}", "Accept": "application/vnd.github.v3+json"}
 
         if method == "GET":
-            resp = requests.get(url, headers=headers, timeout=10)
+            resp = requests.get(url, headers=headers, timeout=5)
             if resp.status_code == 200:
                 data = resp.json()
                 return base64.b64decode(data['content']).decode(), data['sha']
             return None, None
         
         elif method == "PUT":
+            # Wir holen den SHA nur hier, wenn wir wirklich schreiben
             _, sha = github_request(filename, method="GET")
-            payload = {
-                "message": f"Update {filename}",
-                "content": base64.b64encode(content.encode()).decode()
-            }
+            payload = {"message": f"Update {filename}", "content": base64.b64encode(content.encode()).decode()}
             if sha: payload["sha"] = sha
             return requests.put(url, json=payload, headers=headers, timeout=10)
 
-    # Initialisierung Session States
-    if 'unsaved_changes' not in st.session_state:
-        st.session_state.unsaved_changes = False
+    # Initialisierung Session States (Nur einmal beim Start laden)
     if 'wichtige_artikel' not in st.session_state:
         raw_w, _ = github_request("wichtig.txt")
         st.session_state.wichtige_artikel = set(raw_w.splitlines()) if raw_w else set()
         raw_g, _ = github_request("geloescht.txt")
         st.session_state.geloeschte_artikel = set(raw_g.splitlines()) if raw_g else set()
+        st.session_state.unsaved_changes = False
 
-    # --- 3. RSS LOGIK ---
-    def fetch_feed(row):
-        try:
-            feed = feedparser.parse(row['url'])
-            now = datetime.now()
-            entries = []
-            for e in feed.entries:
-                pub = e.get('published_parsed')
-                is_new = (now - datetime(*pub[:6])) < timedelta(hours=24) if pub else False
-                entries.append({
-                    'title': e.get('title', 'Kein Titel'),
-                    'link': e.get('link', '#'),
-                    'source_name': row['name'],
-                    'category': row['category'],
-                    'is_new': is_new,
-                    'published': e.get('published', 'Unbekannt')
-                })
-            return entries
-        except: return []
-
+    # --- 3. RSS LOGIK (AUS CACHE) ---
     @st.cache_data(ttl=3600)
     def load_news_data():
         raw_cache, _ = github_request("news_cache.json")
         if raw_cache:
             try: return json.loads(raw_cache)
             except: pass
+        # Fallback Live-Laden
         df_feeds = pd.read_csv("feeds.csv", encoding='utf-8-sig', sep=None, engine='python')
+        def fetch_feed(row):
+            try:
+                f = feedparser.parse(row['url'])
+                now = datetime.now()
+                return [{'title': e.get('title', 'Kein Titel'), 'link': e.get('link', '#'), 
+                         'source_name': row['name'], 'category': row['category'],
+                         'is_new': (now - datetime(*e.get('published_parsed')[:6])) < timedelta(hours=24) if e.get('published_parsed') else False,
+                         'published': e.get('published', 'Unbekannt')} for e in f.entries]
+            except: return []
+        
         all_entries = []
         with ThreadPoolExecutor(max_workers=10) as executor:
             results = list(executor.map(fetch_feed, [row for _, row in df_feeds.iterrows()]))
@@ -95,62 +81,45 @@ if check_password():
     with st.sidebar:
         st.title("📌 IP Filter")
         
-        # Warnung und Speicher-Button
         if st.session_state.unsaved_changes:
-            st.error("⚠️ Ungespeicherte Änderungen!")
+            st.error("⚠️ Änderungen nicht gespeichert!")
             if st.button("💾 JETZT SPEICHERN", type="primary", use_container_width=True):
                 with st.spinner("Synchronisiere..."):
                     github_request("wichtig.txt", "PUT", "\n".join(st.session_state.wichtige_artikel))
                     github_request("geloescht.txt", "PUT", "\n".join(st.session_state.geloeschte_artikel))
                     st.session_state.unsaved_changes = False
-                    st.success("Erfolgreich gespeichert!")
+                    st.success("Gespeichert!")
                     st.rerun()
         else:
-            st.success("✅ Alles synchronisiert")
+            st.success("✅ Alles synchron")
 
         st.divider()
-        if st.button("🔄 Alles live aktualisieren", use_container_width=True):
+        if st.button("🔄 Live-Refresh", use_container_width=True):
             st.cache_data.clear()
             st.rerun()
         
         view = st.radio("Ansicht", ["Alle", "EPO", "WIPO", "⭐ Wichtig"])
         search = st.text_input("🔍 Suchen...")
 
-    # --- 5. FILTERLOGIK ---
-    news = [e for e in all_news if e['link'] not in st.session_state.geloeschte_artikel]
+    # --- 5. FILTERLOGIK & ANZEIGE ---
+    # Wir filtern die News basierend auf dem AKTUELLEN Session State (geht in Millisekunden)
+    display_news = [e for e in all_news if e['link'] not in st.session_state.geloeschte_artikel]
     if view == "⭐ Wichtig":
-        news = [e for e in news if e['link'] in st.session_state.wichtige_artikel]
+        display_news = [e for e in display_news if e['link'] in st.session_state.wichtige_artikel]
     elif view != "Alle":
-        news = [e for e in news if e['category'] == view]
+        display_news = [e for e in display_news if e['category'] == view]
     if search:
-        news = [e for e in news if search.lower() in e['title'].lower()]
+        display_news = [e for e in display_news if search.lower() in e['title'].lower()]
 
-    # --- 6. ANZEIGE & FAST CLICK LOGIK ---
     st.header(f"Beiträge: {view}")
-    quellen = sorted(list(set([e['source_name'] for e in news])))
-
-    # Schnelle Klick-Funktion ohne Cloud-Wartezeit
-    def fast_click(link, task):
-        if task == "delete":
-            st.session_state.geloeschte_artikel.add(link)
-        elif task == "important":
-            if link in st.session_state.wichtige_artikel:
-                st.session_state.wichtige_artikel.remove(link)
-            else:
-                st.session_state.wichtige_artikel.add(link)
-        st.session_state.unsaved_changes = True
-        st.rerun()
+    quellen = sorted(list(set([e['source_name'] for e in display_news])))
 
     for q in quellen:
-        q_news = [e for e in news if e['source_name'] == q]
+        q_news = [e for e in display_news if e['source_name'] == q]
         anz_neu = sum(1 for e in q_news if e['is_new'])
-        label = f"📂 {q}" + (f" 🔵 ({anz_neu})" if anz_neu > 0 else "")
-        
-        with st.expander(label, expanded=False):
+        with st.expander(f"📂 {q} " + (f"🔵 ({anz_neu})" if anz_neu > 0 else ""), expanded=False):
             for i, entry in enumerate(q_news):
                 link = entry['link']
-                unique_key = f"{q}_{i}"
-                
                 col_t, col_f, col_d = st.columns([0.8, 0.1, 0.1])
                 
                 with col_t:
@@ -160,10 +129,17 @@ if check_password():
                     st.caption(f"{entry['published']}")
                 
                 with col_f:
-                    if st.button("⭐", key=f"f_{unique_key}"):
-                        fast_click(link, "important")
+                    if st.button("⭐", key=f"f_{q}_{i}"):
+                        if link in st.session_state.wichtige_artikel:
+                            st.session_state.wichtige_artikel.remove(link)
+                        else:
+                            st.session_state.wichtige_artikel.add(link)
+                        st.session_state.unsaved_changes = True
+                        st.rerun()
                 
                 with col_d:
-                    if st.button("🗑️", key=f"d_{unique_key}"):
-                        fast_click(link, "delete")
+                    if st.button("🗑️", key=f"d_{q}_{i}"):
+                        st.session_state.geloeschte_artikel.add(link)
+                        st.session_state.unsaved_changes = True
+                        st.rerun()
                 st.divider()
