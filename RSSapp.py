@@ -115,7 +115,7 @@ if check_password():
                 # Um den Stern sofort zu sehen, müsste man st.rerun nutzen, 
                 # dann klappt aber der Ordner zu. Wir lassen es für Speed weg.
         
-         with c3:
+        with c3:
             if st.button("🗑️", key=f"d_{link}_{i}"):
                 st.session_state.geloeschte_artikel.add(link)
                 st.session_state.unsaved_changes = True
