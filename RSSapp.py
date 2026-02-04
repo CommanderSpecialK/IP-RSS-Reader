@@ -41,7 +41,7 @@ if check_password():
         except: return None, None
 
     # --- 3. INITIALES LADEN (Nur einmal) ---
-    if 'all_news' not in st.session_state:
+    if 'all_news' not in st.session_state or not st.session_state.all_news:
         with st.spinner("Lade Daten..."):
             raw_w, _ = github_request("wichtig.txt")
             st.session_state.wichtige_artikel = set(raw_w.splitlines()) if raw_w else set()
@@ -100,7 +100,7 @@ if check_password():
         if c3.button("🗑️", key=f"d_{entry['source_name']}_{i}_{link}"):
             st.session_state.geloeschte_artikel.add(link)
             st.session_state.unsaved_changes = True
-            st.rerun(scope="fragment") # Artikel verschwindet sofort, Ordner bleibt offen
+            st.rerun() # Artikel verschwindet sofort, Ordner bleibt offen
 
     # --- 7. ORDNER ---
     st.header(f"Beiträge: {view}")
