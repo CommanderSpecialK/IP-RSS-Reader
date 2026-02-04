@@ -31,6 +31,30 @@ if check_password():
             "Authorization": f"token {token}",
             "Accept": "application/vnd.github.v3+json"
         }
+
+    def get_cache_time():
+        repo = st.secrets['repo_name'].strip()
+        token = st.secrets['github_token'].strip()
+        url = f"https://api.github.com{repo}/contents/news_cache.json"
+        headers = {"Authorization": f"token {token}"}
+        
+        resp = requests.get(url, headers=headers)
+        if resp.status_code == 200:
+            # GitHub liefert UTC Zeit, wir wandeln sie grob um
+            last_modified = resp.json().get("commit", {}).get("author", {}).get("date", "Unbekannt")
+            # Einfacher: Wir schauen in die Datei-Details
+            return resp.json().get("name", "Cache") 
+        return "Unbekannt"
+    
+    # --- In der Sidebar anzeigen ---
+    with st.sidebar:
+        st.title("📌 IP Filter")
+        # Cache-Info anzeigen
+        raw_cache, _ = github_request("news_cache.json")
+        if raw_cache:
+            st.caption("📅 Letztes automatisches Update: Heute 06:00")
+
+        
         
         if method == "GET":
             resp = requests.get(url, headers=headers, timeout=10)
