@@ -19,35 +19,46 @@ def check_password():
     return False
 
 if check_password():
-    # --- 2. GITHUB API MIT DIAGNOSE ---
+    # --- 2. GITHUB API (KORRIGIERTE URL) ---
     def load_from_github(filename):
-        repo = st.secrets['repo_name'].strip()
+        # Sicherstellen, dass repo_name kein führendes/folgendes Leerzeichen oder Schrägstriche hat
+        repo = st.secrets['repo_name'].strip().strip("/")
         token = st.secrets['github_token'].strip()
+        
+        # ABSOLUT SICHERE URL-STRUKTUR
         url = f"https://api.github.com{repo}/contents/{filename}"
-        headers = {"Authorization": f"token {token}", "Accept": "application/vnd.github.v3+json"}
+        headers = {
+            "Authorization": f"token {token}",
+            "Accept": "application/vnd.github.v3+json"
+        }
         
         try:
             resp = requests.get(url, headers=headers, timeout=10)
             if resp.status_code == 200:
                 content = base64.b64decode(resp.json()['content']).decode("utf-8")
-                return content, "OK"
+                return content, "✅ OK"
             else:
-                return None, f"Fehler: {resp.status_code} ({resp.json().get('message', 'Keine Nachricht')})"
+                return None, f"❌ Fehler: {resp.status_code}"
         except Exception as e:
-            return None, f"Verbindungsfehler: {str(e)}"
+            return None, f"⚠️ URL-Fehler: {str(e)}"
 
     def sync_to_github():
-        repo, token = st.secrets['repo_name'].strip(), st.secrets['github_token'].strip()
+        repo = st.secrets['repo_name'].strip().strip("/")
+        token = st.secrets['github_token'].strip()
         headers = {"Authorization": f"token {token}", "Accept": "application/vnd.github.v3+json"}
         
         def upload(filename, content):
-            url = f"https://api.github.com/repos/{repo}/contents/{filename}"
+            url = f"https://api.github.com{repo}/contents/{filename}"
             r = requests.get(url, headers=headers, timeout=5)
             sha = r.json().get('sha') if r.status_code == 200 else None
-            payload = {"message": "Update", "content": base64.b64encode(content.encode("utf-8")).decode("utf-8"), "sha": sha}
+            payload = {
+                "message": "Update via App",
+                "content": base64.b64encode(content.encode("utf-8")).decode("utf-8"),
+                "sha": sha
+            }
             requests.put(url, json=payload, headers=headers, timeout=10)
 
-        with st.spinner("Speichere auf GitHub..."):
+        with st.spinner("Speichere..."):
             with ThreadPoolExecutor() as executor:
                 executor.submit(upload, "wichtig.txt", "\n".join(list(st.session_state.wichtige_artikel)))
                 executor.submit(upload, "geloescht.txt", "\n".join(list(st.session_state.geloeschte_artikel)))
@@ -56,25 +67,20 @@ if check_password():
 
     # --- 3. INITIALES LADEN ---
     if 'all_news_df' not in st.session_state:
-        with st.spinner("Lade Daten..."):
-            # Lade Favoriten & Gelöschte
+        with st.spinner("Lade Daten von GitHub..."):
             raw_w, status_w = load_from_github("wichtig.txt")
             st.session_state.wichtige_artikel = set(raw_w.splitlines()) if raw_w else set()
             
             raw_g, status_g = load_from_github("geloescht.txt")
             st.session_state.geloeschte_artikel = set(raw_g.splitlines()) if raw_g else set()
             
-            # Lade News-Cache
             raw_json, status_json = load_from_github("news_cache.json")
-            st.session_state.debug_status = status_json # Für die Sidebar
+            st.session_state.debug_status = status_json
             
             if raw_json:
                 try:
-                    data = json.loads(raw_json)
-                    # Falls JSON als Liste von Objekten kommt
-                    st.session_state.all_news_df = pd.DataFrame(data)
-                except Exception as e:
-                    st.error(f"JSON-Parse-Fehler: {e}")
+                    st.session_state.all_news_df = pd.DataFrame(json.loads(raw_json))
+                except:
                     st.session_state.all_news_df = pd.DataFrame()
             else:
                 st.session_state.all_news_df = pd.DataFrame()
@@ -85,7 +91,7 @@ if check_password():
     # --- 4. SIDEBAR ---
     with st.sidebar:
         st.title("📌 IP Manager")
-        st.info(f"📁 API-Status: {st.session_state.debug_status}")
+        st.info(f"📡 API-Status: {st.session_state.debug_status}")
         
         if st.session_state.unsaved_changes:
             st.button("💾 SPEICHERN", type="primary", use_container_width=True, on_click=sync_to_github)
@@ -100,7 +106,7 @@ if check_password():
         df = df[~df['link'].isin(st.session_state.geloeschte_artikel)]
         if view == "⭐ Wichtig":
             df = df[df['link'].isin(st.session_state.wichtige_artikel)]
-        elif view != "Alle":
+        elif view != "Alle" and 'category' in df.columns:
             df = df[df['category'] == view]
         if search:
             df = df[df['title'].str.contains(search, case=False, na=False)]
@@ -111,14 +117,13 @@ if check_password():
         st.header(f"Beiträge: {view} ({len(filtered_df)})")
         
         if filtered_df.empty:
-            st.warning("Keine Daten zum Anzeigen.")
+            st.warning("Keine Daten gefunden. (Prüfe GitHub-Anbindung)")
             return
 
         for q, group in filtered_df.groupby("source_name"):
             with st.expander(f"📂 {q} ({len(group)})", expanded=st.session_state.expander_state.get(q, False)):
                 st.session_state.expander_state[q] = True
                 
-                # Bulk Delete
                 if st.button(f"🗑️ Alle in {q} löschen", key=f"bulk_{q}"):
                     st.session_state.geloeschte_artikel.update(group['link'].tolist())
                     st.session_state.unsaved_changes = True
