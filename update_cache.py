@@ -55,10 +55,10 @@ def update_cache():
     
     # 3. Upload zu GitHub
     content = json.dumps(all_entries)
-    clean_repo = REPO.strip()
+    clean_repo = str(REPO).strip().strip("/")
     
     # KORRIGIERTE URL: /repos/ muss vor dem Namen stehen!
-    url = f"https://api.github.com/{clean_repo}/contents/news_cache.json"
+    url = f"https://api.github.com{clean_repo}/contents/news_cache.json"
     
     headers = {
         "Authorization": f"token {TOKEN}", 
