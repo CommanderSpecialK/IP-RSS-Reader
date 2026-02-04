@@ -105,49 +105,47 @@ if check_password():
         view = st.radio("Ansicht", ["Alle", "EPO", "WIPO", "⭐ Wichtig"])
         search = st.text_input("🔍 Suche...")
 
-    # --- 6. FILTERN & ANZEIGE ---
-    # Filtern passiert im Arbeitsspeicher (RAM) -> Extrem schnell
-    news = [e for e in st.session_state.all_news if e['link'] not in st.session_state.geloeschte_artikel]
-    
-    if view == "⭐ Wichtig":
-        news = [e for e in news if e['link'] in st.session_state.wichtige_artikel]
-    elif view != "Alle":
-        news = [e for e in news if e['category'] == view]
-    
-    if search:
-        news = [e for e in news if search.lower() in e['title'].lower()]
-
+    # --- 6. ANZEIGE MIT FRAGMENTEN (VERHINDERT AUSGRAUEN) ---
     st.header(f"Beiträge: {view}")
     
+    # Fragment-Funktion für einen einzelnen Artikel
+    @st.fragment
+    def render_article(entry, i):
+        link = entry['link']
+        if link in st.session_state.geloeschte_artikel:
+            st.empty() # Artikel verschwindet visuell im Fragment
+            return
+
+        c1, c2, c3 = st.columns([0.8, 0.1, 0.1])
+        with c1:
+            fav_icon = "⭐ " if link in st.session_state.wichtige_artikel else ""
+            neu_icon = "🟢 " if entry['is_new'] else ""
+            st.markdown(f"{neu_icon}{fav_icon}**[{entry['title']}]({link})**")
+            st.caption(f"Datum: {entry.get('published', 'Unbekannt')}")
+        
+        with c2:
+            if st.button("⭐", key=f"f_{link}_{i}"):
+                if link in st.session_state.wichtige_artikel:
+                    st.session_state.wichtige_artikel.remove(link)
+                else:
+                    st.session_state.wichtige_artikel.add(link)
+                st.session_state.unsaved_changes = True
+                st.rerun() # Aktualisiert nur das Fragment (Stern erscheint)
+        
+        with c3:
+            if st.button("🗑️", key=f"d_{link}_{i}"):
+                st.session_state.geloeschte_artikel.add(link)
+                st.session_state.unsaved_changes = True
+                st.rerun() # Aktualisiert nur das Fragment (Artikel weg)
+
+    # Ordner-Anzeige
     quellen = sorted(list(set([e['source_name'] for e in news])))
     for q in quellen:
         q_news = [e for e in news if e['source_name'] == q]
         anz_neu = sum(1 for e in q_news if e['is_new'])
-        label = f"📂 {q} " + (f"🔵 ({anz_neu})" if anz_neu > 0 else "")
         
-        with st.expander(label, expanded=False):
+        # Wir nutzen den Quellennamen als Key für den Expander, damit er offen bleibt
+        with st.expander(f"📂 {q} " + (f"🔵 ({anz_neu})" if anz_neu > 0 else ""), expanded=False):
             for i, entry in enumerate(q_news):
-                link = entry['link']
-                c1, c2, c3 = st.columns([0.8, 0.1, 0.1])
-                
-                with c1:
-                    fav_icon = "⭐ " if link in st.session_state.wichtige_artikel else ""
-                    neu_icon = "🟢 " if entry['is_new'] else ""
-                    st.markdown(f"{neu_icon}{fav_icon}**[{entry['title']}]({link})**")
-                    st.caption(f"Datum: {entry.get('published', 'Unbekannt')}")
-                
-                with c2:
-                    if st.button("⭐", key=f"f_{link}_{i}"):
-                        if link in st.session_state.wichtige_artikel:
-                            st.session_state.wichtige_artikel.remove(link)
-                        else:
-                            st.session_state.wichtige_artikel.add(link)
-                        st.session_state.unsaved_changes = True
-                        st.rerun()
-                
-                with c3:
-                    if st.button("🗑️", key=f"d_{link}_{i}"):
-                        st.session_state.geloeschte_artikel.add(link)
-                        st.session_state.unsaved_changes = True
-                        st.rerun()
+                render_article(entry, i)
                 st.divider()
