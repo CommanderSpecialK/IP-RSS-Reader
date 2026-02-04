@@ -1,66 +1,4 @@
 ﻿name;url;category
-AFW Holding;https://register.epo.org/rssSearch?query=applicant+%3D+afw+and+applicant+%3D+holding&lng=de;EPO
-BENZ;https://register.epo.org/rssSearch?query=applicant+%3D+benz+and+applicant+%3D+werkzeug*&lng=de;EPO
-CHIRON;https://register.epo.org/rssSearch?query=applicant+%3D+chiron+and+applicant+%3D+group&lng=de;EPO
-CORREA;https://register.epo.org/rssSearch?query=applicant+%3D+nicolas+and+applicant+%3D+correa&lng=de;EPO
-DANOBAT;https://register.epo.org/rssSearch?query=applicant+%3D+danobat&lng=de;EPO
-Deckel Maho;https://register.epo.org/rssSearch?query=applicant+%3D+deckel+and+applicant+%3D+maho&lng=de;EPO
-DMG MORI;https://register.epo.org/rssSearch?query=applicant+%3D+dmg+and+applicant+%3D+mori&lng=de;EPO
-DOOSAN;https://register.epo.org/rssSearch?query=applicant+%3D+doosan+and+applicant+%3D+mach*&lng=de;EPO
-EMAG;https://register.epo.org/rssSearch?query=applicant+%3D+emag+and+applicant+%3D+gmbh&lng=de;EPO
-EMCO;https://register.epo.org/rssSearch?query=applicant+%3D+emco+and+applicant+%3D+magde*&lng=de;EPO
-ETXE-TAR;https://register.epo.org/rssSearch?query=applicant+%3D+etxe+and+applicant+%3D+tar&lng=de;EPO
-FANUC;https://register.epo.org/rssSearch?query=applicant+%3D+fanuc+and+classification+%3D+B23Q&lng=de;EPO
-FFG Werke;https://register.epo.org/rssSearch?query=applicant+%3D+ffg+and+applicant+%3D+werk*&lng=de;EPO
-FILL;https://register.epo.org/rssSearch?query=applicant+%3D+fill+and+applicant+%3D+gesell*&lng=de;EPO
-FUNDACION TEKNIKER;https://register.epo.org/rssSearch?query=applicant+%3D+fundacion+and+applicant+%3D+tekniker&lng=de;EPO
-GEBR HELLER;https://register.epo.org/rssSearch?query=applicant+%3D+gebr+and+applicant+%3D+heller&lng=de;EPO
-GEMINIS;https://register.epo.org/rssSearch?query=applicant+%3D+maher+and+applicant+%3D+holding&lng=de;EPO
-GF;https://register.epo.org/rssSearch?query=applicant+%3D+gf+and+applicant+%3D+machining&lng=de;EPO
-Gildemeister;https://register.epo.org/rssSearch?query=applicant+%3D+gildemeister&lng=de;EPO
-GMTK;https://register.epo.org/rssSearch?query=applicant+%3D+gmtk&lng=de;EPO
-GROB Werke;https://register.epo.org/rssSearch?query=applicant+%3D+grob+and+applicant+%3D+werk*&lng=de;EPO
-HAMUEL;https://register.epo.org/rssSearch?query=applicant+%3D+hamuel&lng=de;EPO
-HARDINGE;https://register.epo.org/rssSearch?query=applicant+%3D+hardinge&lng=de;EPO
-HEDELIUS;https://register.epo.org/rssSearch?query=applicant+%3D+hedelius&lng=de;EPO
-Heinrich Georg;https://register.epo.org/rssSearch?query=%28applicant+%3D+heinrich+and+applicant+%3D+georg%29+and+applicant+%3D+gmbh&lng=de;EPO
-HERMLE;https://register.epo.org/rssSearch?query=applicant+%3D+hermle+and+applicant+%3D+berthold&lng=de;EPO
-Heyligenstaedt;https://register.epo.org/rssSearch?query=applicant+%3D+heyligenstaedt&lng=de;EPO
-HORKOS;https://register.epo.org/rssSearch?query=applicant+%3D+horkos&lng=de;EPO
-HÜLLER HILLE;https://register.epo.org/rssSearch?query=applicant+%3D+h%C3%BCller+and+applicant+%3D+hille&lng=de;EPO
-HURCO;https://register.epo.org/rssSearch?query=applicant+%3D+hurco&lng=de;EPO
-Hyundai Wia;https://register.epo.org/rssSearch?query=applicant+%3D+hyundai+and+applicant+%3D+wia&lng=de;EPO
-Index Werke;https://register.epo.org/rssSearch?query=applicant+%3D+index+and+applicant+%3D+werke&lng=de;EPO
-KITAMURA;https://register.epo.org/rssSearch?query=applicant+%3D+kitamura+and+applicant+%3D+mach*&lng=de;EPO
-KOVOSVIT;https://register.epo.org/rssSearch?query=applicant+%3D+kovosvit&lng=de;EPO
-MAG IAS;https://register.epo.org/rssSearch?query=applicant+%3D+mag+and+applicant+%3D+ias&lng=de;EPO
-MAKINO;https://register.epo.org/rssSearch?query=applicant+%3D+makino+and+applicant+%3D+milling&lng=de;EPO
-MATEC;https://register.epo.org/rssSearch?query=applicant+%3D+matec+and+applicant+%3D+gmbh&lng=de;EPO
-MAZAK;https://register.epo.org/rssSearch?query=applicant+%3D+mazak&lng=de;EPO
-MONFORTS;https://register.epo.org/rssSearch?query=applicant+%3D+monforts&lng=de;EPO
-MURATA;https://register.epo.org/rssSearch?query=%28applicant+%3D+murata+and+applicant+%3D+machinery%29+and+classification+%3D+B23Q&lng=de;EPO
-NAKAMURA TOME;https://register.epo.org/rssSearch?query=applicant+%3D+nakamura+and+applicant+%3D+tome&lng=de;EPO
-NSH;https://register.epo.org/rssSearch?query=applicant+%3D+nsh&lng=de;EPO
-OKUMA;https://register.epo.org/rssSearch?query=applicant+%3D+OKUMA+and+applicant+%3D+CORPORATION&lng=de;EPO
-PITTLER;https://register.epo.org/rssSearch?query=%28applicant+%3D+PITTLER+and+applicant+%3D+T%29+and+applicant+%3D+S&lng=de;EPO
-PRÄWEMA;https://register.epo.org/rssSearch?query=applicant+%3D+pr%C3%A4wema&lng=de;EPO
-PROMOT;https://register.epo.org/rssSearch?query=applicant+%3D+promot+and+applicant+%3D+automation&lng=de;EPO
-REIDEN;https://register.epo.org/rssSearch?query=applicant+%3D+Reiden+and+applicant+%3D+Technik&lng=de;EPO
-SAUTER;https://register.epo.org/rssSearch?query=applicant+%3D+SAUTER&lng=de;EPO
-Schwäbische WZM;https://register.epo.org/rssSearch?query=applicant+%3D+SCHW%C3%84BISCHE+and+applicant+%3D+WERKZEUGMASCHINEN&lng=de;EPO
-Shenyang;https://register.epo.org/rssSearch?query=applicant+%3D+shenyang+and+applicant+%3D+machine&lng=de;EPO
-Shin Nippon;https://register.epo.org/rssSearch?query=%28applicant+%3D+shin+and+applicant+%3D+nippon%29+and+applicant+%3D+koki&lng=de;EPO
-SHW;https://register.epo.org/rssSearch?query=applicant+%3D+SHW+and+applicant+%3D+WERKZEUGMASCHINEN&lng=de;EPO
-SORALUCE;https://register.epo.org/rssSearch?query=applicant+%3D+soraluce&lng=de;EPO
-STAMA;https://register.epo.org/rssSearch?query=applicant+%3D+STAMA+and+applicant+%3D+Maschinenfabrik&lng=de;EPO
-STARRAG;https://register.epo.org/rssSearch?query=applicant+%3D+starrag&lng=de;EPO
-TAKISAWA;https://register.epo.org/rssSearch?query=applicant+%3D+takisawa+and+applicant+%3D+machine&lng=de;EPO
-TRAUB;https://register.epo.org/rssSearch?query=applicant+%3D+traub+and+applicant+%3D+drehmaschinen&lng=de;EPO
-TSUGAMI;https://register.epo.org/rssSearch?query=applicant+%3D+TSUGAMI&lng=de;EPO
-Waldrich Coburg;https://register.epo.org/rssSearch?query=applicant+%3D+coburg+and+applicant+%3D+waldrich&lng=de;EPO
-Waldrich Siegen;https://register.epo.org/rssSearch?query=applicant+%3D+waldrich+and+applicant+%3D+siegen&lng=de;EPO
-WEISSER;https://register.epo.org/rssSearch?query=applicant+%3D+weisser+and+applicant+%3D+s%C3%B6hne&lng=de;EPO
-WIA Machine Tools;https://register.epo.org/rssSearch?query=applicant+%3D+WIA+and+classification+%3D+B23&lng=de;EPO
 AFW Holding;https://patentscope.wipo.int/search/de/10f1194f-321c-4854-97ab-1a463858207c/rss.xml;WIPO
 BENZ;https://patentscope.wipo.int/search/de/7c569379-8720-4adb-a6f8-675d92b82b15/rss.xml;WIPO
 BOST;https://patentscope.wipo.int/search/de/281fb690-dfad-4a63-96d4-6ace3002e5cf/rss.xml;WIPO
@@ -134,3 +72,4 @@ WITTENSTEIN;https://patentscope.wipo.int/search/de/d0b3f6d9-e78d-445d-a9aa-efbf4
 YANGZHOU;https://patentscope.wipo.int/search/de/987734e2-fc1f-4d65-8be6-54bfe53916f6/rss.xml;WIPO
 B23 Austria 24-28;https://patentscope.wipo.int/search/de/736eedd5-7b0d-4236-a023-1739054bf1c2/rss.xml;WIPO
 B23 Germany 24-28;https://patentscope.wipo.int/search/de/26f79571-494e-47a3-a3c5-f3fba47bd90c/rss.xml;WIPO
+
