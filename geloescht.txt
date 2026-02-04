@@ -1,7 +1,9 @@
 
 https://patentscope.wipo.int/search/de/detail.jsf?docId=FR186501221
 https://patentscope.wipo.int/search/de/detail.jsf?docId=US35648883
+https://patentscope.wipo.int/search/de/detail.jsf?docId=GB135256775
 https://patentscope.wipo.int/search/de/detail.jsf?docId=CN346913668
+https://patentscope.wipo.int/search/de/detail.jsf?docId=GB135574774
 https://patentscope.wipo.int/search/de/detail.jsf?docId=FR188322942
 https://patentscope.wipo.int/search/de/detail.jsf?docId=DE99407892
 https://patentscope.wipo.int/search/de/detail.jsf?docId=CS298545450
