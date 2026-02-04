@@ -89,45 +89,48 @@ if check_password():
 
     # --- 6. ARTIKEL RENDERN (Fragment) ---
     @st.fragment
-    def render_article(entry, i):
+    def render_article(entry, i, source_name):
         link = entry['link']
+        # Der Key muss absolut eindeutig sein, auch wenn der gleiche Link 
+        # in verschiedenen Kontexten erscheint.
+        safe_key = f"{source_name}_{i}_{link}"
+        
         c1, c2, c3 = st.columns([0.8, 0.1, 0.1])
         with c1:
             fav = "⭐ " if link in st.session_state.wichtige_artikel else ""
             st.markdown(f"{fav}**[{entry['title']}]({link})**")
-            st.caption(f"{entry['source_name']} | {entry.get('published', 'N/A')}")
+            st.caption(f"{entry.get('published', 'N/A')}")
         
-        if c2.button("⭐", key=f"f_{i}_{link}"):
-            if link in st.session_state.wichtige_artikel: st.session_state.wichtige_artikel.remove(link)
-            else: st.session_state.wichtige_artikel.add(link)
+        # Eindeutige Keys durch Kombination von Quelle, Index und Link
+        if c2.button("⭐", key=f"fav_{safe_key}"):
+            if link in st.session_state.wichtige_artikel: 
+                st.session_state.wichtige_artikel.remove(link)
+            else: 
+                st.session_state.wichtige_artikel.add(link)
             st.session_state.unsaved_changes = True
             st.rerun(scope="fragment")
             
-        if c3.button("🗑️", key=f"d_{i}_{link}"):
+        if c3.button("🗑️", key=f"del_{safe_key}"):
             st.session_state.geloeschte_artikel.add(link)
             st.session_state.unsaved_changes = True
-            st.rerun() # Globaler Rerun nötig, damit Artikel aus der Liste fliegt
+            st.rerun() 
 
-    # --- 7. HAUPTBEREICH (Ordner mit State-Memory) ---
+    # --- 7. HAUPTBEREICH ---
     st.header(f"Beiträge: {view}")
     if news:
         quellen = sorted(list(set([e['source_name'] for e in news])))
         for q in quellen:
             q_news = [e for e in news if e['source_name'] == q]
-            
-            # Expander Zustand tracken
             exp_key = f"exp_{q}"
-            # Wenn der Key noch nicht im State ist, initialisiere ihn (False = zu)
+            
             if exp_key not in st.session_state.expander_state:
                 st.session_state.expander_state[exp_key] = False
             
-            # Expander nutzt den State für 'expanded'
             with st.expander(f"📂 {q} ({len(q_news)})", expanded=st.session_state.expander_state[exp_key]):
-                # Falls User den Expander manuell klickt, wird das hier beim nächsten Rerun meist überschrieben.
-                # Um es perfekt zu machen, nutzen wir einen Checkbox-Hack oder st.toggle innerhalb, 
-                # aber für die Lösch-Logik reicht dies:
-                st.session_state.expander_state[exp_key] = True # Markiere als offen, wenn wir drin arbeiten
+                # Wir setzen den State auf True, wenn der Expander gerendert wird
+                st.session_state.expander_state[exp_key] = True 
                 
                 for i, entry in enumerate(q_news):
-                    render_article(entry, i)
+                    # Übergabe von q (source_name) an die Funktion für den Key
+                    render_article(entry, i, q)
                     st.divider()
