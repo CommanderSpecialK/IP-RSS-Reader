@@ -21,41 +21,16 @@ def check_password():
     return False
 
 if check_password():
-    # --- 2. GITHUB STORAGE LOGIK (KORRIGIERT) ---
+    # --- 2. GITHUB STORAGE LOGIK ---
     def github_request(filename, method="GET", content=None):
         repo = st.secrets['repo_name'].strip()
         token = st.secrets['github_token'].strip()
-        # KORREKT: Der Schrägstrich nach /repos/
         url = f"https://api.github.com/repos/{repo}/contents/{filename}"
         headers = {
             "Authorization": f"token {token}",
             "Accept": "application/vnd.github.v3+json"
         }
 
-    def get_cache_time():
-        repo = st.secrets['repo_name'].strip()
-        token = st.secrets['github_token'].strip()
-        url = f"https://api.github.com/repos/{repo}/contents/news_cache.json"
-        headers = {"Authorization": f"token {token}"}
-        
-        resp = requests.get(url, headers=headers)
-        if resp.status_code == 200:
-            # GitHub liefert UTC Zeit, wir wandeln sie grob um
-            last_modified = resp.json().get("commit", {}).get("author", {}).get("date", "Unbekannt")
-            # Einfacher: Wir schauen in die Datei-Details
-            return resp.json().get("name", "Cache") 
-        return "Unbekannt"
-    
-    # --- In der Sidebar anzeigen ---
-    with st.sidebar:
-        st.title("📌 IP Filter")
-        # Cache-Info anzeigen
-        raw_cache, _ = github_request("news_cache.json")
-        if raw_cache:
-            st.caption("📅 Letztes automatisches Update: Heute 06:00")
-
-        
-        
         if method == "GET":
             resp = requests.get(url, headers=headers, timeout=10)
             if resp.status_code == 200:
@@ -64,15 +39,17 @@ if check_password():
             return None, None
         
         elif method == "PUT":
+            # SHA holen für Update
             _, sha = github_request(filename, method="GET")
             payload = {
                 "message": f"Update {filename}",
                 "content": base64.b64encode(content.encode()).decode()
             }
-            if sha: payload["sha"] = sha
+            if sha: 
+                payload["sha"] = sha
             return requests.put(url, json=payload, headers=headers, timeout=10)
 
-    # Daten initial laden
+    # Initiales Laden der Listen
     if 'wichtige_artikel' not in st.session_state:
         raw_w, _ = github_request("wichtig.txt")
         st.session_state.wichtige_artikel = set(raw_w.splitlines()) if raw_w else set()
@@ -80,7 +57,7 @@ if check_password():
         raw_g, _ = github_request("geloescht.txt")
         st.session_state.geloeschte_artikel = set(raw_g.splitlines()) if raw_g else set()
 
-    # --- 3. RSS LOGIK (OPTIMIERT) ---
+    # --- 3. RSS LOGIK ---
     def fetch_feed(row):
         try:
             feed = feedparser.parse(row['url'])
@@ -102,31 +79,32 @@ if check_password():
 
     @st.cache_data(ttl=3600)
     def load_news_data():
-        # 1. Versuche, den schnellen Cache von GitHub zu laden
         raw_cache, _ = github_request("news_cache.json")
         if raw_cache:
             try:
-                st.sidebar.success("🚀 Daten aus Cache geladen")
+                # In der Sidebar Erfolg melden (wird später in der Sidebar gerendert)
                 return json.loads(raw_cache)
-            except Exception as e:
-                st.sidebar.warning(f"Cache-Fehler: {e}")
+            except: pass
         
-        # 2. Fallback: Live laden (nur wenn kein Cache da ist oder Fehler auftritt)
-        st.sidebar.info("📡 Lade Feeds live (kein Cache gefunden)...")
+        # Fallback Live
         df_feeds = pd.read_csv("feeds.csv", encoding='utf-8-sig', sep=None, engine='python')
         all_entries = []
         with ThreadPoolExecutor(max_workers=10) as executor:
             results = list(executor.map(fetch_feed, [row for _, row in df_feeds.iterrows()]))
-        for res in results: 
-            all_entries.extend(res)
+        for res in results: all_entries.extend(res)
         return all_entries
-
 
     all_news = load_news_data()
 
-    # --- 4. SIDEBAR & FILTER ---
+    # --- 4. SIDEBAR ---
     with st.sidebar:
         st.title("📌 IP Filter")
+        
+        # Cache-Info & Button
+        if any(e for e in all_news): # Wenn Daten da sind
+            st.success("🚀 Cache aktiv")
+            st.caption("📅 Update: Täglich 06:00")
+            
         if st.button("🔄 Alles live aktualisieren", use_container_width=True):
             st.cache_data.clear()
             st.rerun()
@@ -135,7 +113,7 @@ if check_password():
         view = st.radio("Ansicht", ["Alle", "EPO", "WIPO", "⭐ Wichtig"])
         search = st.text_input("🔍 Suchen...")
 
-    # Filtern
+    # --- 5. FILTERLOGIK ---
     news = [e for e in all_news if e['link'] not in st.session_state.geloeschte_artikel]
     if view == "⭐ Wichtig":
         news = [e for e in news if e['link'] in st.session_state.wichtige_artikel]
@@ -144,8 +122,8 @@ if check_password():
     if search:
         news = [e for e in news if search.lower() in e['title'].lower()]
 
-    # --- 5. ANZEIGE ---
-    st.header(f"News: {view}")
+    # --- 6. ANZEIGE ---
+    st.header(f"Beiträge: {view}")
     quellen = sorted(list(set([e['source_name'] for e in news])))
 
     for q in quellen:
