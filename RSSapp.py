@@ -146,10 +146,17 @@ if check_password():
             with st.expander(f"📂 {q} ({len(group)})", expanded=st.session_state.expander_state[q]):
                 st.session_state.expander_state[q] = True
                 
-                if st.button(f"🗑️ Ordner leeren", key=f"bulk_{q}"):
-                    st.session_state.geloeschte_artikel.update(group['link'].tolist())
+                # --- Massen-Löschen für diesen Ordner ---
+                if st.button(f"🗑️ Ordner leeren", key=f"bulk_{q}", use_container_width=True):
+                    # 1. Links extrahieren
+                    links_to_del = group['link'].tolist()
+                    # 2. Ins globale Set übertragen
+                    st.session_state.geloeschte_artikel.update(links_to_del)
+                    # 3. Änderungen markieren
                     st.session_state.unsaved_changes = True
+                    # 4. Sofortiger globaler Rerun, um die Filterung (df) neu zu triggern
                     st.rerun()
+
 
                 st.divider()
                 for i, row in group.iterrows():
