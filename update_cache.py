@@ -14,26 +14,28 @@ TOKEN = os.getenv("GH_TOKEN")
 def fetch_feed(row):
     try:
         url = str(row['url']).strip()
-        # Wichtig: WIPO braucht oft einen User-Agent Header
-        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
+        # WIPO braucht diesen "Browser-Trick", sonst liefern sie 0 Ergebnisse
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+        
+        # Wir laden erst den Inhalt mit den Browser-Headers
         response = requests.get(url, headers=headers, timeout=15)
         
-        if response.status_code == 200:
-            feed = feedparser.parse(response.content)
-            # ... Rest deiner Logik zum Extrahieren der Einträge
-
-
         if response.status_code != 200:
-            print(f"Fehler {response.status_code} bei Feed: {row['name']}")
+            print(f"Fehler {response.status_code} bei {row['name']}")
             return []
-            
+
+        # Jetzt erst parsen wir den heruntergeladenen Inhalt
         feed = feedparser.parse(response.content)
         now = datetime.now()
         entries = []
         
         for e in feed.entries:
             pub = e.get('published_parsed')
+            # is_new = jünger als 48h
             is_new = (now - datetime(*pub[:6])).total_seconds() < 172800 if pub else False
+            
             entries.append({
                 'title': e.get('title', 'Kein Titel'),
                 'link': e.get('link', '#'),
@@ -45,8 +47,9 @@ def fetch_feed(row):
             })
         return entries
     except Exception as e:
-        print(f"Technischer Fehler bei {row['name']}: {e}")
+        print(f"Fehler bei {row['name']}: {e}")
         return []
+
 
 
 def update_cache():
