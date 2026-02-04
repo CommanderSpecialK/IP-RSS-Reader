@@ -34,7 +34,7 @@ if check_password():
         if not repo or not st.secrets.get("github_token"):
             return None, "❌ Secrets fehlen!"
         
-        url = f"https://api.github.com{repo}/contents/{filename}"
+        url = f"https://api.github.com/repos/{repo}/contents/{filename}"
         try:
             resp = requests.get(url, headers=get_gh_headers(), timeout=10)
             if resp.status_code == 200:
