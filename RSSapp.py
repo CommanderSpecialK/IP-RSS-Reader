@@ -48,40 +48,44 @@ if check_password():
             "content": base64.b64encode(content.encode("utf-8")).decode("utf-8"),
             "sha": sha
         }
-        return requests.put(url, json=payload, headers=get_gh_headers(), timeout=15).status_code
+        resp = requests.put(url, json=payload, headers=get_gh_headers(), timeout=15)
+        return resp.status_code
 
     def sync_and_cleanup():
         """Bereinigt den Cache, behält aber die Löschliste als Schutzschild bei"""
         try:
-            with st.spinner("Synchronisiere Daten..."):
+            with st.spinner("Synchronisiere Daten mit GitHub..."):
                 df = st.session_state.all_news_df
                 geloescht_set = st.session_state.geloeschte_artikel
                 
-                # 1. Aus Cache entfernen (macht die App schnell)
+                # 1. Aus Cache entfernen (macht die DB klein und schnell)
                 if not df.empty and geloescht_set:
                     df_cleaned = df[~df['link'].isin(geloescht_set)]
                 else:
                     df_cleaned = df
 
-                # 2. news_cache.json schreiben (bereinigt)
+                # 2. Daten für Upload vorbereiten
                 new_cache_json = df_cleaned.to_dict(orient='records')
-                res1 = upload_file("news_cache.json", json.dumps(new_cache_json, indent=2), "DB Cleanup")
-                
-                # 3. geloescht.txt schreiben (bleibt als Schutzschild erhalten!)
                 geloescht_content = "\n".join(sorted(list(geloescht_set)))
-                res2 = upload_file("geloescht.txt", geloescht_content, "Update Delete List")
-                
-                # 4. wichtig.txt schreiben
                 wichtig_content = "\n".join(sorted(list(st.session_state.wichtige_artikel)))
+                
+                # 3. Uploads durchführen
+                # Wir prüfen auf Status 200 (OK) oder 201 (Created)
+                res1 = upload_file("news_cache.json", json.dumps(new_cache_json, indent=2), "DB Cleanup")
+                res2 = upload_file("geloescht.txt", geloescht_content, "Update Delete List")
                 res3 = upload_file("wichtig.txt", wichtig_content, "Update Favorites")
 
-                if res1 in and res2 in and res3 in:
+                success_codes = [200, 201]
+                if res1 in success_codes and res2 in success_codes and res3 in success_codes:
                     st.session_state.all_news_df = df_cleaned
                     st.session_state.unsaved_changes = False
-                    st.success("✅ Synchronisiert! (Cache bereinigt, Schutz aktiv)")
+                    st.success("✅ Synchronisiert! Cache bereinigt, Löschliste aktualisiert.")
                     time.sleep(1)
                     st.rerun()
-
+                else:
+                    st.error(f"GitHub Fehler: Cache({res1}), Liste({res2}), Favoriten({res3})")
+        except Exception as e:
+            st.error(f"Fehler: {e}")
 
     # --- 3. INITIALES LADEN ---
     if 'all_news_df' not in st.session_state:
@@ -92,7 +96,7 @@ if check_password():
             raw_g, _ = load_from_github("geloescht.txt")
             st.session_state.geloeschte_artikel = set(raw_g.splitlines()) if raw_g else set()
             
-            raw_json, status = load_from_github("news_cache.json")
+            raw_json, _ = load_from_github("news_cache.json")
             if raw_json:
                 st.session_state.all_news_df = pd.DataFrame(json.loads(raw_json))
             else:
@@ -106,10 +110,10 @@ if check_password():
         st.title("📌 IP Manager")
         if st.session_state.unsaved_changes:
             st.warning("⚠️ Änderungen vorhanden")
-            if st.button("💾 DB BEREINIGEN & SPEICHERN", type="primary", use_container_width=True):
+            if st.button("💾 BEREINIGEN & SPEICHERN", type="primary", use_container_width=True):
                 sync_and_cleanup()
         else:
-            st.success("☁️ DB ist sauber")
+            st.success("☁️ DB ist synchron")
             
         st.divider()
         if st.button("📁 Alle zuklappen", use_container_width=True):
@@ -119,10 +123,9 @@ if check_password():
         view = st.radio("Ansicht", ["Alle", "EPO", "WIPO", "⭐ Wichtig"])
         search = st.text_input("🔍 Suche...")
 
-    # --- 5. FILTERING (Nur für die Anzeige) ---
+    # --- 5. FILTERING ---
     df_display = st.session_state.all_news_df.copy()
     if not df_display.empty and 'link' in df_display.columns:
-        # Auch in der Anzeige sofort ausblenden
         df_display = df_display[~df_display['link'].isin(st.session_state.geloeschte_artikel)]
         if view == "⭐ Wichtig":
             df_display = df_display[df_display['link'].isin(st.session_state.wichtige_artikel)]
@@ -133,30 +136,33 @@ if check_password():
 
     # --- 6. DISPLAY ---
     st.header(f"Beiträge: {view} ({len(df_display)})")
-    for q, group in df_display.groupby("source_name"):
-        with st.expander(f"📂 {q} ({len(group)})", expanded=st.session_state.expander_state.get(q, False)):
-            st.session_state.expander_state[q] = True
-            
-            if st.button(f"🗑️ Ordner leeren", key=f"bulk_{q}", use_container_width=True):
-                st.session_state.geloeschte_artikel.update(group['link'].tolist())
-                st.session_state.unsaved_changes = True
-                st.rerun()
-
-            st.divider()
-            for i, row in group.iterrows():
-                link = row['link']
-                c1, c2, c3 = st.columns([0.8, 0.1, 0.1])
-                is_fav = link in st.session_state.wichtige_artikel
-                c1.markdown(f"{'⭐ ' if is_fav else ''}**[{row['title']}]({link})**")
+    if not df_display.empty:
+        for q, group in df_display.groupby("source_name"):
+            with st.expander(f"📂 {q} ({len(group)})", expanded=st.session_state.expander_state.get(q, False)):
+                st.session_state.expander_state[q] = True
                 
-                if c2.button("⭐", key=f"f_{q}_{i}"):
-                    if is_fav: st.session_state.wichtige_artikel.remove(link)
-                    else: st.session_state.wichtige_artikel.add(link)
+                if st.button(f"🗑️ Ordner leeren", key=f"bulk_{q}", use_container_width=True):
+                    st.session_state.geloeschte_artikel.update(group['link'].tolist())
                     st.session_state.unsaved_changes = True
                     st.rerun()
-                    
-                if c3.button("🗑️", key=f"d_{q}_{i}"):
-                    st.session_state.geloeschte_artikel.add(link)
-                    st.session_state.unsaved_changes = True
-                    st.rerun()
+
                 st.divider()
+                for i, row in group.iterrows():
+                    link = row['link']
+                    c1, c2, c3 = st.columns([0.8, 0.1, 0.1])
+                    is_fav = link in st.session_state.wichtige_artikel
+                    c1.markdown(f"{'⭐ ' if is_fav else ''}**[{row['title']}]({link})**")
+                    
+                    if c2.button("⭐", key=f"f_{q}_{i}"):
+                        if is_fav: st.session_state.wichtige_artikel.remove(link)
+                        else: st.session_state.wichtige_artikel.add(link)
+                        st.session_state.unsaved_changes = True
+                        st.rerun()
+                        
+                    if c3.button("🗑️", key=f"d_{q}_{i}"):
+                        st.session_state.geloeschte_artikel.add(link)
+                        st.session_state.unsaved_changes = True
+                        st.rerun()
+                    st.divider()
+    else:
+        st.info("Keine Einträge gefunden.")
