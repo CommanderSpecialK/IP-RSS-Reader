@@ -39,21 +39,20 @@ if check_password():
             return None, None
         
         elif method == "PUT":
-            # SHA holen für Update
             _, sha = github_request(filename, method="GET")
             payload = {
                 "message": f"Update {filename}",
                 "content": base64.b64encode(content.encode()).decode()
             }
-            if sha: 
-                payload["sha"] = sha
+            if sha: payload["sha"] = sha
             return requests.put(url, json=payload, headers=headers, timeout=10)
 
-    # Initiales Laden der Listen
+    # Initialisierung Session States
+    if 'unsaved_changes' not in st.session_state:
+        st.session_state.unsaved_changes = False
     if 'wichtige_artikel' not in st.session_state:
         raw_w, _ = github_request("wichtig.txt")
         st.session_state.wichtige_artikel = set(raw_w.splitlines()) if raw_w else set()
-        
         raw_g, _ = github_request("geloescht.txt")
         st.session_state.geloeschte_artikel = set(raw_g.splitlines()) if raw_g else set()
 
@@ -81,12 +80,8 @@ if check_password():
     def load_news_data():
         raw_cache, _ = github_request("news_cache.json")
         if raw_cache:
-            try:
-                # In der Sidebar Erfolg melden (wird später in der Sidebar gerendert)
-                return json.loads(raw_cache)
+            try: return json.loads(raw_cache)
             except: pass
-        
-        # Fallback Live
         df_feeds = pd.read_csv("feeds.csv", encoding='utf-8-sig', sep=None, engine='python')
         all_entries = []
         with ThreadPoolExecutor(max_workers=10) as executor:
@@ -96,20 +91,28 @@ if check_password():
 
     all_news = load_news_data()
 
-    # --- 4. SIDEBAR ---
+    # --- 4. SIDEBAR & BATCH SAVING ---
     with st.sidebar:
         st.title("📌 IP Filter")
         
-        # Cache-Info & Button
-        if any(e for e in all_news): # Wenn Daten da sind
-            st.success("🚀 Cache aktiv")
-            st.caption("📅 Update: Täglich 06:00")
-            
+        # Warnung und Speicher-Button
+        if st.session_state.unsaved_changes:
+            st.error("⚠️ Ungespeicherte Änderungen!")
+            if st.button("💾 JETZT SPEICHERN", type="primary", use_container_width=True):
+                with st.spinner("Synchronisiere..."):
+                    github_request("wichtig.txt", "PUT", "\n".join(st.session_state.wichtige_artikel))
+                    github_request("geloescht.txt", "PUT", "\n".join(st.session_state.geloeschte_artikel))
+                    st.session_state.unsaved_changes = False
+                    st.success("Erfolgreich gespeichert!")
+                    st.rerun()
+        else:
+            st.success("✅ Alles synchronisiert")
+
+        st.divider()
         if st.button("🔄 Alles live aktualisieren", use_container_width=True):
             st.cache_data.clear()
             st.rerun()
         
-        st.divider()
         view = st.radio("Ansicht", ["Alle", "EPO", "WIPO", "⭐ Wichtig"])
         search = st.text_input("🔍 Suchen...")
 
@@ -122,23 +125,20 @@ if check_password():
     if search:
         news = [e for e in news if search.lower() in e['title'].lower()]
 
-    # --- 6. ANZEIGE ---
+    # --- 6. ANZEIGE & FAST CLICK LOGIK ---
     st.header(f"Beiträge: {view}")
     quellen = sorted(list(set([e['source_name'] for e in news])))
 
-    # Wir definieren eine Funktion für die Buttons, um UI von IO zu trennen
-    def handle_click(link, filename, task):
+    # Schnelle Klick-Funktion ohne Cloud-Wartezeit
+    def fast_click(link, task):
         if task == "delete":
             st.session_state.geloeschte_artikel.add(link)
-            # Der Trick: Wir sagen Streamlit, dass es erst UI updatet 
-            # und dann im Hintergrund zu GitHub funkt
-            github_request(filename, "PUT", "\n".join(st.session_state.geloeschte_artikel))
         elif task == "important":
             if link in st.session_state.wichtige_artikel:
                 st.session_state.wichtige_artikel.remove(link)
             else:
                 st.session_state.wichtige_artikel.add(link)
-            github_request(filename, "PUT", "\n".join(st.session_state.wichtige_artikel))
+        st.session_state.unsaved_changes = True
         st.rerun()
 
     for q in quellen:
@@ -160,11 +160,10 @@ if check_password():
                     st.caption(f"{entry['published']}")
                 
                 with col_f:
-                    # Button reagiert schneller durch direkten Funktionsaufruf
                     if st.button("⭐", key=f"f_{unique_key}"):
-                        handle_click(link, "wichtig.txt", "important")
+                        fast_click(link, "important")
                 
                 with col_d:
                     if st.button("🗑️", key=f"d_{unique_key}"):
-                        handle_click(link, "geloescht.txt", "delete")
+                        fast_click(link, "delete")
                 st.divider()
