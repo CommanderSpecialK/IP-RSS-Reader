@@ -115,8 +115,11 @@ if check_password():
         if c3.button("🗑️", key=f"d_{idx}"):
             st.session_state.geloeschte_artikel.add(link)
             st.session_state.unsaved_changes = True
-            # Bleibt im Fragment -> UI reagiert sofort, Sidebar wartet auf nächsten globalen Rerun
-            st.rerun(scope="fragment")
+            # WICHTIG: Kein scope="fragment" hier!
+            # Ein normaler rerun() dauert bei Pandas-Filterung nur Millisekunden,
+            # aktualisiert aber die Sidebar sofort mit.
+            st.rerun() 
+
 
     # --- 7. DISPLAY ---
     st.header(f"Beiträge: {view}")
