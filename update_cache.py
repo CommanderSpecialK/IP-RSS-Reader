@@ -7,11 +7,12 @@ import os
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 
-# Konfiguration laden
+# --- CONFIGURATION ---
 REPO = os.getenv("REPO_NAME")
 TOKEN = os.getenv("GH_TOKEN")
 
 def fetch_feed(row):
+    """Ruft einen einzelnen Feed ab und extrahiert ALLE Einträge."""
     try:
         url = str(row['url']).strip()
         feed = feedparser.parse(url)
@@ -19,13 +20,14 @@ def fetch_feed(row):
         entries = []
         
         for e in feed.entries:
-            pub = e.get('published_parsed')
+            pub_parsed = e.get('published_parsed')
             
-            # 1. 'is_new' ist NUR für die Optik in der App (jünger als 48h)
-            is_new = (now - datetime(*pub[:6])).total_seconds() < 172800 if pub else False
+            # 'is_new' dient nur der visuellen Markierung (z.B. jünger als 48h)
+            is_new = False
+            if pub_parsed:
+                dt_pub = datetime(*pub_parsed[:6])
+                is_new = (now - dt_pub).total_seconds() < 172800 # 48 Stunden
             
-            # 2. WICHTIG: Wir fügen JEDEN Artikel aus dem Feed hinzu, 
-            # ohne ein "if" für das Alter!
             entries.append({
                 'title': e.get('title', 'Kein Titel'),
                 'link': e.get('link', '#'),
@@ -33,7 +35,7 @@ def fetch_feed(row):
                 'category': str(row['category']),
                 'is_new': is_new,
                 'published': e.get('published', 'Unbekannt'),
-                'pub_date': list(pub) if pub else [1970, 1, 1, 0, 0, 0, 0, 0, 0] 
+                'pub_sort': list(pub_parsed) if pub_parsed else [1970, 1, 1, 0, 0, 0, 0, 0, 0]
             })
         return entries
     except Exception as e:
@@ -41,48 +43,77 @@ def fetch_feed(row):
         return []
 
 def update_cache():
-    # ... (Sperrliste laden wie gehabt) ...
+    if not REPO or not TOKEN:
+        print("CRITICAL: Secrets REPO_NAME oder GH_TOKEN fehlen!")
+        return
+
+    clean_repo = str(REPO).strip().strip("/")
+    headers = {
+        "Authorization": f"token {TOKEN}", 
+        "Accept": "application/vnd.github.v3+json"
+    }
+
+    # 1. Sperrliste (geloescht.txt) von GitHub laden
+    print("Lade Sperrliste...")
+    del_url = f"https://api.github.com/repos/{clean_repo}/contents/geloescht.txt"
+    r_del = requests.get(del_url, headers=headers)
+    sperrliste = set()
+    if r_del.status_code == 200:
+        content_del = base64.b64decode(r_del.json()['content']).decode("utf-8")
+        sperrliste = set(content_del.splitlines())
+    print(f"Sperrliste geladen: {len(sperrliste)} Einträge.")
+
+    # 2. Feeds aus feeds.csv laden
+    try:
+        df_feeds = pd.read_csv("feeds.csv", encoding='utf-8-sig', sep=None, engine='python')
+    except Exception as e:
+        print(f"CSV Fehler: {e}")
+        return
 
     # 3. Alle Feeds parallel abrufen
+    print(f"Starte Abruf von {len(df_feeds)} Quellen...")
     all_entries = []
     with ThreadPoolExecutor(max_workers=10) as executor:
         results = list(executor.map(fetch_feed, [row for _, row in df_feeds.iterrows()]))
     
+    # 4. Zusammenführen und Filtern (NUR gegen die Sperrliste)
     for res in results:
         for entry in res:
-            # Nur nach der Sperrliste filtern, NICHT nach dem Alter!
             if entry['link'] not in sperrliste:
                 all_entries.append(entry)
 
-    # 4. Sortieren nach Datum (Neueste ganz oben)
-    all_entries.sort(key=lambda x: x.get('pub_date'), reverse=True)
+    # 5. Sortieren nach Datum (Neueste zuerst)
+    all_entries.sort(key=lambda x: x['pub_sort'], reverse=True)
     
-    # 5. Die neuesten 500 dauerhaft speichern
+    # Die Top 500 Artikel behalten (Gedächtnis der App)
     final_data = all_entries[:500]
     
-    # ... (Rest des Uploads wie gehabt) ...
+    # 'pub_sort' entfernen, um das JSON klein zu halten
+    for item in final_data:
+        item.pop('pub_sort', None)
 
-    
-    # Hilfsfeld 'pub_date' vor dem Speichern wieder entfernen (JSON sauber halten)
-    for item in final_data: item.pop('pub_date', None)
+    print(f"Fertig gefiltert: {len(final_data)} Artikel werden hochgeladen.")
 
-    print(f"Update: {len(final_data)} Artikel im Cache gespeichert.")
-
-    # 6. Upload news_cache.json
+    # 6. Upload der news_cache.json zu GitHub
     content = json.dumps(final_data, indent=2)
     url = f"https://api.github.com/repos/{clean_repo}/contents/news_cache.json"
     
-    resp = requests.get(url, headers=headers)
-    sha = resp.json().get("sha") if resp.status_code == 200 else None
+    # SHA für Update holen
+    resp_sha = requests.get(url, headers=headers)
+    sha = resp_sha.json().get("sha") if resp_sha.status_code == 200 else None
     
     payload = {
-        "message": "Daily Update: Persistent Cache",
+        "message": "Persistent Cache Update (No Time Filter)",
         "content": base64.b64encode(content.encode("utf-8")).decode("utf-8"),
         "sha": sha
     }
     
-    r = requests.put(url, json=payload, headers=headers)
-    print(f"GitHub Status: {r.status_code}")
+    r_put = requests.put(url, json=payload, headers=headers)
+    
+    if r_put.status_code in [200, 201]:
+        print(f"ERFOLG: news_cache.json aktualisiert (Status {r_put.status_code})")
+    else:
+        print(f"FEHLER: GitHub API antwortet mit {r_put.status_code}: {r_put.text}")
 
 if __name__ == "__main__":
     update_cache()
