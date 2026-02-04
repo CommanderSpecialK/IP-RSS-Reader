@@ -19,7 +19,7 @@ def fetch_feed(row):
     
     encoded_target = requests.utils.quote(url)
     proxy_url = f"https://api.allorigins.win/get?url={encoded_target}"
-
+    time.sleep(1)
     try:
         # Der Proxy liefert ein JSON-Objekt zurück
         resp = requests.get(proxy_url, timeout=30)
@@ -95,7 +95,7 @@ def update_cache():
     print(f"Starte Abruf von {len(df_feeds)} Quellen über Proxy...")
     all_entries = []
     # Bei Proxy-Nutzung sind 10 Worker wieder okay
-    with ThreadPoolExecutor(max_workers=10) as executor:
+    with ThreadPoolExecutor(max_workers=1) as executor:
         results = list(executor.map(fetch_feed, [row for _, row in df_feeds.iterrows()]))
     
     # 4. Zusammenführen und Sperrliste beachten
