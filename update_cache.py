@@ -14,11 +14,15 @@ TOKEN = os.getenv("GH_TOKEN")
 def fetch_feed(row):
     try:
         url = str(row['url']).strip()
-        # WIPO blockiert oft Anfragen ohne Browser-Kennung (User-Agent)
-        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
-        
-        # Erst den Inhalt laden, dann an feedparser übergeben
+        # Wichtig: WIPO braucht oft einen User-Agent Header
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
         response = requests.get(url, headers=headers, timeout=15)
+        
+        if response.status_code == 200:
+            feed = feedparser.parse(response.content)
+            # ... Rest deiner Logik zum Extrahieren der Einträge
+
+
         if response.status_code != 200:
             print(f"Fehler {response.status_code} bei Feed: {row['name']}")
             return []
