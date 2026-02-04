@@ -54,7 +54,7 @@ if check_password():
     def sync_and_cleanup():
         """Bereinigt den Cache, behält aber die Löschliste als Schutzschild bei"""
         try:
-            with st.spinner("Synchronisiere Daten mit GitHub..."):
+            with st.spinner("Synchronisiere Daten..."):
                 df = st.session_state.all_news_df
                 geloescht_set = st.session_state.geloeschte_artikel
                 
