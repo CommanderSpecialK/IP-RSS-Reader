@@ -12,13 +12,14 @@ REPO = os.getenv("REPO_NAME")
 TOKEN = os.getenv("GH_TOKEN")
 
 def fetch_feed(row):
+    """Ruft einen Feed ab und tarnt sich dabei als Browser, um 403-Fehler zu vermeiden."""
     try:
         url = str(row['url']).strip()
-        # WIPO braucht diesen "Browser-Trick", sonst liefern sie 0 Ergebnisse
+        # Diese Header simulieren einen echten Webbrowser
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+            'Accept': 'application/rss+xml, application/xml, text/xml, */*'
         }
-        
         # Wir laden erst den Inhalt mit den Browser-Headers
         response = requests.get(url, headers=headers, timeout=15)
         
@@ -32,10 +33,15 @@ def fetch_feed(row):
         entries = []
         
         for e in feed.entries:
-            pub = e.get('published_parsed')
+            pub_parsed = e.get('published_parsed')
             # is_new = jünger als 48h
-            is_new = (now - datetime(*pub[:6])).total_seconds() < 172800 if pub else False
-            
+
+            # 'is_new' Markierung (48 Stunden)
+            is_new = False
+            if pub_parsed:
+                dt_pub = datetime(*pub_parsed[:6])
+                is_new = (now - dt_pub).total_seconds() < 172800
+
             entries.append({
                 'title': e.get('title', 'Kein Titel'),
                 'link': e.get('link', '#'),
@@ -43,11 +49,11 @@ def fetch_feed(row):
                 'category': str(row['category']),
                 'is_new': is_new,
                 'published': e.get('published', 'Unbekannt'),
-                'pub_sort': list(pub) if pub else [1970, 1, 1, 0, 0, 0, 0, 0, 0]
+                'pub_sort': list(pub_parsed) if pub_parsed else [1970, 1, 1, 0, 0, 0]
             })
         return entries
     except Exception as e:
-        print(f"Fehler bei {row['name']}: {e}")
+        print(f"Technischer Fehler bei {row.get('name')}: {e}")
         return []
 
 
