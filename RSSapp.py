@@ -91,29 +91,30 @@ if check_password():
     @st.fragment
     def render_article(entry, i, source_name):
         link = entry['link']
-        # Der Key muss absolut eindeutig sein, auch wenn der gleiche Link 
-        # in verschiedenen Kontexten erscheint.
-        safe_key = f"{source_name}_{i}_{link}"
-        
+        # Lokaler State, um den Artikel sofort auszublenden ohne globalen Rerun
+        if f"hidden_{link}" in st.session_state:
+            return st.empty()
+
         c1, c2, c3 = st.columns([0.8, 0.1, 0.1])
         with c1:
             fav = "⭐ " if link in st.session_state.wichtige_artikel else ""
             st.markdown(f"{fav}**[{entry['title']}]({link})**")
-            st.caption(f"{entry.get('published', 'N/A')}")
         
-        # Eindeutige Keys durch Kombination von Quelle, Index und Link
-        if c2.button("⭐", key=f"fav_{safe_key}"):
-            if link in st.session_state.wichtige_artikel: 
-                st.session_state.wichtige_artikel.remove(link)
-            else: 
-                st.session_state.wichtige_artikel.add(link)
+        if c2.button("⭐", key=f"fav_{source_name}_{i}_{link}"):
+            if link in st.session_state.wichtige_artikel: st.session_state.wichtige_artikel.remove(link)
+            else: st.session_state.wichtige_artikel.add(link)
             st.session_state.unsaved_changes = True
             st.rerun(scope="fragment")
             
-        if c3.button("🗑️", key=f"del_{safe_key}"):
+        if c3.button("🗑️", key=f"del_{source_name}_{i}_{link}"):
+            # 1. In die Löschliste eintragen
             st.session_state.geloeschte_artikel.add(link)
             st.session_state.unsaved_changes = True
-            st.rerun() 
+            # 2. Sofort lokal im Fragment verstecken
+            st.session_state[f"hidden_{link}"] = True
+            # 3. Nur das Fragment neu zeichnen (der Artikel verschwindet sofort)
+            st.rerun(scope="fragment") 
+
 
     # --- 7. HAUPTBEREICH ---
     st.header(f"Beiträge: {view}")
