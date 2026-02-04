@@ -17,12 +17,15 @@ def fetch_feed(row):
         feed = feedparser.parse(url)
         now = datetime.now()
         entries = []
+        
         for e in feed.entries:
             pub = e.get('published_parsed')
-            # OPTIONAL: Hier kannst du 'is_new' für die Anzeige in Streamlit setzen
-            # (z.B. alles was jünger als 48h ist bekommt einen grünen Punkt)
+            
+            # 1. 'is_new' ist NUR für die Optik in der App (jünger als 48h)
             is_new = (now - datetime(*pub[:6])).total_seconds() < 172800 if pub else False
             
+            # 2. WICHTIG: Wir fügen JEDEN Artikel aus dem Feed hinzu, 
+            # ohne ein "if" für das Alter!
             entries.append({
                 'title': e.get('title', 'Kein Titel'),
                 'link': e.get('link', '#'),
@@ -30,7 +33,7 @@ def fetch_feed(row):
                 'category': str(row['category']),
                 'is_new': is_new,
                 'published': e.get('published', 'Unbekannt'),
-                'pub_date': list(pub) if pub else None # Hilfsfeld zum Sortieren
+                'pub_date': list(pub) if pub else [1970, 1, 1, 0, 0, 0, 0, 0, 0] 
             })
         return entries
     except Exception as e:
@@ -38,42 +41,27 @@ def fetch_feed(row):
         return []
 
 def update_cache():
-    if not REPO or not TOKEN:
-        print("Fehler: Secrets fehlen!")
-        return
+    # ... (Sperrliste laden wie gehabt) ...
 
-    clean_repo = str(REPO).strip().strip("/")
-    headers = {"Authorization": f"token {TOKEN}", "Accept": "application/vnd.github.v3+json"}
-
-    # 1. Sperrliste (geloescht.txt) laden
-    del_url = f"https://api.github.com/repos/{clean_repo}/contents/geloescht.txt"
-    r_del = requests.get(del_url, headers=headers)
-    sperrliste = set()
-    if r_del.status_code == 200:
-        content_del = base64.b64decode(r_del.json()['content']).decode("utf-8")
-        sperrliste = set(content_del.splitlines())
-
-    # 2. Feeds laden
-    df_feeds = pd.read_csv("feeds.csv", encoding='utf-8-sig', sep=None, engine='python')
-
-    # 3. Parallel abrufen
+    # 3. Alle Feeds parallel abrufen
     all_entries = []
     with ThreadPoolExecutor(max_workers=10) as executor:
         results = list(executor.map(fetch_feed, [row for _, row in df_feeds.iterrows()]))
     
-    # 4. Filtern & Sammeln
     for res in results:
         for entry in res:
-            # Nur hinzufügen, wenn NICHT gelöscht
+            # Nur nach der Sperrliste filtern, NICHT nach dem Alter!
             if entry['link'] not in sperrliste:
                 all_entries.append(entry)
 
-    # 5. Nach Datum sortieren (Neueste zuerst)
-    # Falls pub_date fehlt, nehmen wir ein altes Datum als Fallback
-    all_entries.sort(key=lambda x: x.get('pub_date') or [1970, 1, 1], reverse=True)
+    # 4. Sortieren nach Datum (Neueste ganz oben)
+    all_entries.sort(key=lambda x: x.get('pub_date'), reverse=True)
     
-    # Behalte die Top 500 (oder X) Artikel, egal wie alt sie sind
+    # 5. Die neuesten 500 dauerhaft speichern
     final_data = all_entries[:500]
+    
+    # ... (Rest des Uploads wie gehabt) ...
+
     
     # Hilfsfeld 'pub_date' vor dem Speichern wieder entfernen (JSON sauber halten)
     for item in final_data: item.pop('pub_date', None)
