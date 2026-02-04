@@ -59,7 +59,8 @@ if check_password():
     with st.sidebar:
         st.title("📌 IP Manager")
         
-        if st.session_state.get('unsaved_changes', False):
+        # Der Speicher-Button erscheint hier wieder zuverlässig
+        if st.session_state.unsaved_changes:
             st.error("⚠️ Nicht gespeichert!")
             if st.button("💾 JETZT SPEICHERN", type="primary", use_container_width=True):
                 with st.spinner("Speichere..."):
@@ -90,28 +91,27 @@ if check_password():
     # --- 6. ANZEIGE ---
     st.header(f"Beiträge: {view}")
 
-    # Hilfsfunktion für Interaktionen
-    def handle_interaction(link, task):
-        if task == "important":
+    # Funktion für Klicks (sorgt für schnelles UI Update)
+    def handle_interaction(link, type):
+        if type == "important":
             if link in st.session_state.wichtige_artikel:
                 st.session_state.wichtige_artikel.remove(link)
             else:
                 st.session_state.wichtige_artikel.add(link)
-        elif task == "delete":
+        elif type == "delete":
             st.session_state.geloeschte_artikel.add(link)
         
         st.session_state.unsaved_changes = True
-        # Kein harter Rerun hier, damit Expander stabil bleiben, falls möglich.
-        # Aber für die Sidebar-Warnung brauchen wir oft einen Rerun.
-        st.rerun()
+        st.rerun() # Wir brauchen ein globales Rerun für die Sidebar-Warnung
 
+    # Ordner rendern
     if news:
         quellen = sorted(list(set([e['source_name'] for e in news])))
         for q in quellen:
             q_news = [e for e in news if e['source_name'] == q]
             anz_neu = sum(1 for e in q_news if e['is_new'])
             
-            # Eindeutiger Key für den Expander hilft beim Offenbleiben
+            # Expander mit festem Key bleibt meistens über Reruns hinweg stabil
             with st.expander(f"📂 {q} ({len(q_news)})" + (f" 🔵 ({anz_neu})" if anz_neu > 0 else ""), expanded=False):
                 for i, entry in enumerate(q_news):
                     link = entry['link']
@@ -127,7 +127,7 @@ if check_password():
                         if st.button("⭐", key=f"f_{q}_{i}_{link}"):
                             handle_interaction(link, "important")
                     
-                    with c3: # KORRIGIERT: c3 statt col3
+                    with c3: # Falls col3 Fehler wirft, c3 nutzen
                         if st.button("🗑️", key=f"d_{q}_{i}_{link}"):
                             handle_interaction(link, "delete")
                     st.divider()
