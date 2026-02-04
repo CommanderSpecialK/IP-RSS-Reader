@@ -10,7 +10,6 @@ from requests.packages.urllib3.util.retry import Retry
 # --- 1. ROBUSTE HTTP SESSION ---
 def get_safe_session():
     session = requests.Session()
-    # Retry bei Netzwerkfehlern oder GitHub-Überlastung
     retry_strategy = Retry(total=3, backoff_factor=1, status_forcelist=[500, 502, 503, 504])
     session.mount("https://", HTTPAdapter(max_retries=retry_strategy))
     return session
@@ -37,33 +36,27 @@ if check_password():
 
         def upload(filename, content):
             url = f"https://api.github.com/repos/{repo}/contents/{filename}"
-            # Aktuellen SHA holen für das Update
             r = session.get(url, headers=headers, timeout=10)
             sha = r.json().get('sha') if r.status_code == 200 else None
             payload = {
-                "message": f"Update {filename} via Manager", 
+                "message": f"Update {filename}", 
                 "content": base64.b64encode(content.encode("utf-8")).decode("utf-8"), 
                 "sha": sha
             }
             session.put(url, json=payload, headers=headers, timeout=10)
 
         with st.spinner("Synchronisiere mit GitHub..."):
-            try:
-                with ThreadPoolExecutor() as executor:
-                    executor.submit(upload, "wichtig.txt", "\n".join(list(st.session_state.wichtige_artikel)))
-                    executor.submit(upload, "geloescht.txt", "\n".join(list(st.session_state.geloeschte_artikel)))
-                st.session_state.unsaved_changes = False
-                st.toast("✅ Gespeichert!")
-                st.rerun()
-            except Exception as e:
-                st.error(f"Fehler beim Speichern: {e}")
+            with ThreadPoolExecutor() as executor:
+                executor.submit(upload, "wichtig.txt", "\n".join(list(st.session_state.wichtige_artikel)))
+                executor.submit(upload, "geloescht.txt", "\n".join(list(st.session_state.geloeschte_artikel)))
+        st.session_state.unsaved_changes = False
+        st.rerun()
 
     # --- 4. INITIALES LADEN ---
     if 'all_news_df' not in st.session_state:
-        # Standard-Schema definieren
         default_df = pd.DataFrame(columns=['title', 'link', 'source_name', 'category', 'published'])
         
-        with st.spinner("Lade Daten von GitHub..."):
+        with st.spinner("Lade Daten..."):
             repo, token = st.secrets['repo_name'].strip(), st.secrets['github_token'].strip()
             headers = {"Authorization": f"token {token}"}
             session = get_safe_session()
@@ -84,34 +77,42 @@ if check_password():
             try:
                 if raw_json:
                     data = json.loads(raw_json)
-                    # Falls das JSON eine Liste ist, direkt laden
+                    # Falls das JSON ein Dictionary mit einem Key ist, extrahiere die Liste
+                    if isinstance(data, dict):
+                        # Suche nach dem ersten Key, der eine Liste enthält (oft 'news' oder 'entries')
+                        for key in data:
+                            if isinstance(data[key], list):
+                                data = data[key]
+                                break
+                    
                     temp_df = pd.DataFrame(data)
-                    # Validierung: Prüfen ob 'link' existiert
                     if not temp_df.empty and 'link' in temp_df.columns:
                         st.session_state.all_news_df = temp_df
                     else:
                         st.session_state.all_news_df = default_df
                 else:
                     st.session_state.all_news_df = default_df
-            except Exception:
+            except:
                 st.session_state.all_news_df = default_df
             
             st.session_state.unsaved_changes = False
             st.session_state.expander_state = {}
 
-    # --- 5. SIDEBAR ---
+    # --- 5. SIDEBAR (Mit Debug Info) ---
     with st.sidebar:
         st.title("📌 IP Manager")
         view = st.radio("Ansicht", ["Alle", "EPO", "WIPO", "⭐ Wichtig"])
         search = st.text_input("🔍 Suche...")
         st.divider()
-        st.info(f"Total: {len(st.session_state.all_news_df)} Artikel geladen.")
+        st.write(f"📊 **Status:**")
+        st.write(f"- Geladen: {len(st.session_state.all_news_df)}")
+        st.write(f"- Gelöscht (Filter): {len(st.session_state.geloeschte_artikel)}")
 
-    # --- 6. FILTERING (Sicherer Zugriff) ---
+    # --- 6. FILTERING ---
     df = st.session_state.all_news_df.copy()
     
-    # Sicherstellen, dass das Dataframe nicht leer ist und die Spalte existiert
     if not df.empty and 'link' in df.columns:
+        # Filterung: Nur Artikel die NICHT in geloescht.txt stehen
         df = df[~df['link'].isin(st.session_state.geloeschte_artikel)]
         
         if view == "⭐ Wichtig":
@@ -122,13 +123,12 @@ if check_password():
         if search and 'title' in df.columns:
             df = df[df['title'].str.contains(search, case=False, na=False)]
 
-    # --- 7. CONTENT FRAGMENT (High Performance) ---
+    # --- 7. CONTENT FRAGMENT ---
     @st.fragment
     def render_ui(filtered_df):
         col_header, col_save = st.columns([0.7, 0.3])
         col_header.header(f"Beiträge: {view} ({len(filtered_df)})")
         
-        # Speicher-Button im Fragment für sofortige Reaktion
         if st.session_state.unsaved_changes:
             if col_save.button("💾 JETZT SPEICHERN", type="primary", use_container_width=True):
                 github_sync()
@@ -136,37 +136,32 @@ if check_password():
             col_save.button("💾 GESPEICHERT", disabled=True, use_container_width=True)
 
         if filtered_df.empty:
-            st.info("Keine Einträge gefunden.")
+            st.info("Keine Einträge gefunden. (Prüfe die Suche oder Filter)")
+            if st.button("Löschliste leeren (Reset)"):
+                st.session_state.geloeschte_artikel = set()
+                st.rerun()
             return
 
-        # Gruppierung
         for q, group in filtered_df.groupby("source_name"):
             exp_key = f"exp_{q}"
-            # Expander-State erhalten
             with st.expander(f"📂 {q} ({len(group)})", expanded=st.session_state.expander_state.get(exp_key, False)):
                 st.session_state.expander_state[exp_key] = True
                 
-                # Bulk Delete
                 if st.button(f"🗑️ Alle in {q} löschen", key=f"bulk_{q}"):
                     st.session_state.geloeschte_artikel.update(group['link'].tolist())
                     st.session_state.unsaved_changes = True
                     st.rerun(scope="fragment")
 
                 st.divider()
-                
                 for i, row in group.iterrows():
                     link = row['link']
-                    # Lokale Prüfung im Fragment für Instant-Löschen
-                    if link in st.session_state.geloeschte_artikel:
-                        continue
+                    if link in st.session_state.geloeschte_artikel: continue
                     
                     c1, c2, c3 = st.columns([0.8, 0.1, 0.1])
                     is_fav = link in st.session_state.wichtige_artikel
-                    
                     c1.markdown(f"{'⭐ ' if is_fav else ''}**[{row['title']}]({link})**")
                     c1.caption(f"{row.get('published','')} | {q}")
                     
-                    # Buttons
                     if c2.button("⭐", key=f"f_{q}_{i}"):
                         if is_fav: st.session_state.wichtige_artikel.remove(link)
                         else: st.session_state.wichtige_artikel.add(link)
@@ -179,5 +174,4 @@ if check_password():
                         st.rerun(scope="fragment")
                     st.divider()
 
-    # App starten
     render_ui(df)
