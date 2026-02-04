@@ -26,7 +26,7 @@ if check_password():
         token = st.secrets['github_token'].strip()
         
         # ABSOLUT SICHERE URL-STRUKTUR
-        url = f"https://api.github.com{repo}/contents/{filename}"
+        url = f"https://api.github.com/{repo}/contents/{filename}"
         headers = {
             "Authorization": f"token {token}",
             "Accept": "application/vnd.github.v3+json"
