@@ -12,22 +12,24 @@ REPO = os.getenv("REPO_NAME")
 TOKEN = os.getenv("GH_TOKEN")
 
 def fetch_feed(row):
-    """Ruft einen einzelnen Feed ab und extrahiert ALLE Einträge."""
     try:
         url = str(row['url']).strip()
-        feed = feedparser.parse(url)
+        # WIPO blockiert oft Anfragen ohne Browser-Kennung (User-Agent)
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+        
+        # Erst den Inhalt laden, dann an feedparser übergeben
+        response = requests.get(url, headers=headers, timeout=15)
+        if response.status_code != 200:
+            print(f"Fehler {response.status_code} bei Feed: {row['name']}")
+            return []
+            
+        feed = feedparser.parse(response.content)
         now = datetime.now()
         entries = []
         
         for e in feed.entries:
-            pub_parsed = e.get('published_parsed')
-            
-            # 'is_new' dient nur der visuellen Markierung (z.B. jünger als 48h)
-            is_new = False
-            if pub_parsed:
-                dt_pub = datetime(*pub_parsed[:6])
-                is_new = (now - dt_pub).total_seconds() < 172800 # 48 Stunden
-            
+            pub = e.get('published_parsed')
+            is_new = (now - datetime(*pub[:6])).total_seconds() < 172800 if pub else False
             entries.append({
                 'title': e.get('title', 'Kein Titel'),
                 'link': e.get('link', '#'),
@@ -35,12 +37,13 @@ def fetch_feed(row):
                 'category': str(row['category']),
                 'is_new': is_new,
                 'published': e.get('published', 'Unbekannt'),
-                'pub_sort': list(pub_parsed) if pub_parsed else [1970, 1, 1, 0, 0, 0, 0, 0, 0]
+                'pub_sort': list(pub) if pub else [1970, 1, 1, 0, 0, 0, 0, 0, 0]
             })
         return entries
     except Exception as e:
-        print(f"Fehler bei Feed {row.get('name')}: {e}")
+        print(f"Technischer Fehler bei {row['name']}: {e}")
         return []
+
 
 def update_cache():
     if not REPO or not TOKEN:
