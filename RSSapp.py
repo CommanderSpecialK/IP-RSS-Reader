@@ -127,7 +127,7 @@ if check_password():
                         if st.button("⭐", key=f"f_{q}_{i}_{link}"):
                             handle_interaction(link, "important")
                     
-                    with col3: # Falls col3 Fehler wirft, c3 nutzen
+                    with c3: # Falls col3 Fehler wirft, c3 nutzen
                         if st.button("🗑️", key=f"d_{q}_{i}_{link}"):
                             handle_interaction(link, "delete")
                     st.divider()
