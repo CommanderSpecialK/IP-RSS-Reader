@@ -22,11 +22,11 @@ if check_password():
     # --- 2. GITHUB API (KORRIGIERTE URL) ---
     def load_from_github(filename):
         # Sicherstellen, dass repo_name kein führendes/folgendes Leerzeichen oder Schrägstriche hat
+        # So ist es bombensicher:
         repo = st.secrets['repo_name'].strip().strip("/")
-        token = st.secrets['github_token'].strip()
-        
-        # ABSOLUT SICHERE URL-STRUKTUR
-        url = f"https://api.github.com/{repo}/contents/{filename}"
+        filename = filename.strip("/")
+        url = f"https://api.github.com/repos/{repo}/contents/{filename}"
+
         headers = {
             "Authorization": f"token {token}",
             "Accept": "application/vnd.github.v3+json"
