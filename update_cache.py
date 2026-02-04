@@ -17,9 +17,8 @@ def fetch_feed(row):
     url = str(row['url']).strip()
     name = str(row.get/('name', 'Unbekannt'))
     
-    # Proxy-Dienst: AllOrigins (maskiert die GitHub-IP)
-    # Die URL muss für den Proxy "gequoted" (encodiert) werden
-    proxy_url = f"https://api.allorigins.win{requests.utils.quote(url)}"
+    encoded_target = requests.utils.quote(url)
+    proxy_url = f"https://api.allorigins.win/get?url={encoded_target}"
 
     try:
         # Der Proxy liefert ein JSON-Objekt zurück
