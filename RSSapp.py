@@ -91,13 +91,13 @@ if check_password():
             st.caption(f"{entry['source_name']} | {entry.get('published', 'N/A')}")
         
         # Diese Buttons führen KEINEN rerun aus, sondern ändern nur den State
-        if c2.button("⭐", key=f"f_{link}_{i}"):
+        if c2.button("⭐", key=f"f_{entry['source_name']}_{i}_{link}"):
             if link in st.session_state.wichtige_artikel: st.session_state.wichtige_artikel.remove(link)
             else: st.session_state.wichtige_artikel.add(link)
             st.session_state.unsaved_changes = True
             st.rerun(scope="fragment") # Nur das Icon im Fragment updaten
             
-        if c3.button("🗑️", key=f"d_{link}_{i}"):
+        if c3.button("🗑️", key=f"d_{entry['source_name']}_{i}_{link}"):
             st.session_state.geloeschte_artikel.add(link)
             st.session_state.unsaved_changes = True
             st.rerun(scope="fragment") # Artikel verschwindet sofort, Ordner bleibt offen
