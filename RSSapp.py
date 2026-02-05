@@ -69,7 +69,7 @@ if check_password():
         repo = st.secrets.get("repo_name", "").strip().strip("/")
         # Annahme: Deine Workflow-Datei heißt 'main.yml' oder 'daily_update.yml'
         # Hier den exakten Namen der .yml Datei eintragen oder 'main.yml' probieren
-        workflow_id = "main.yml" 
+        workflow_id = "daily.yml" 
         url = f"https://api.github.com/repos/{repo}/actions/workflows/{workflow_id}/dispatches"
         data = {"ref": "main"}
         resp = requests.post(url, headers=get_gh_headers(), json=data)
@@ -126,7 +126,7 @@ if check_password():
 
     # --- 4. SIDEBAR ---
     with st.sidebar:
-        st.title("🔓 ADMIN" if st.session_state.is_admin else "👤 LESER")
+        st.title("🔓 ADMIN" if st.session_state.is_admin else "👤 USER")
         
         admin_mode = "Beiträge"
         if st.session_state.is_admin:
