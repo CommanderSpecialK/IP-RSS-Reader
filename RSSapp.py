@@ -9,37 +9,52 @@ import time
 st.set_page_config(page_title="IP RSS Database Manager", layout="wide")
 
 def check_password():
-    """Rendert das Login-Interface und gibt True zurück, wenn eingeloggt."""
+    """Rendert das Login-Interface mit Umschalt-Option."""
     if st.session_state.get("password_correct", False):
         return True
 
+    # Initialisiere den Login-Modus, falls nicht vorhanden
+    if "login_mode" not in st.session_state:
+        st.session_state["login_mode"] = "user"
+
     st.title("🔒 Database Login")
     
-    # Zwei Spalten für User und Admin Login
-    col1, col2 = st.columns(2)
-    
-    with col1:
+    # --- LOGIN MASKE ---
+    if st.session_state["login_mode"] == "user":
         st.subheader("User Login")
-        user_pwd = st.text_input("User Passwort", type="password", key="user_input")
-        if st.button("Als Leser einloggen"):
+        user_pwd = st.text_input("User Passwort", type="password")
+        
+        col1, col2 = st.columns([0.2, 0.8])
+        if col1.button("Einloggen", type="primary"):
             if user_pwd == st.secrets.get("password", "admin"):
                 st.session_state["password_correct"] = True
                 st.session_state["is_admin"] = False
                 st.rerun()
             else:
                 st.error("Falsches Passwort")
+        
+        st.divider()
+        if st.button("Hier klicken für Admin-Login"):
+            st.session_state["login_mode"] = "admin"
+            st.rerun()
 
-    with col2:
-        st.subheader("Admin Login")
-        admin_pwd = st.text_input("Admin Passwort", type="password", key="admin_input")
-        if st.button("Als Admin einloggen"):
-            # Nutzt ein separates Secret 'admin_password'
+    else:
+        st.subheader("🛠️ Admin Login")
+        admin_pwd = st.text_input("Admin Passwort", type="password")
+        
+        col1, col2 = st.columns([0.2, 0.8])
+        if col1.button("Admin Login", type="primary"):
             if admin_pwd == st.secrets.get("admin_password", "superadmin"):
                 st.session_state["password_correct"] = True
                 st.session_state["is_admin"] = True
                 st.rerun()
             else:
                 st.error("Falsches Admin-Passwort")
+        
+        if st.button("Zurück zum User-Login"):
+            st.session_state["login_mode"] = "user"
+            st.rerun()
+
     return False
 
 if check_password():
