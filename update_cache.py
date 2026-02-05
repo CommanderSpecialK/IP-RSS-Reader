@@ -17,39 +17,45 @@ def fetch_feed(row):
     name = str(row.get('name', 'Unbekannt'))
     encoded_target = requests.utils.quote(url)
     
-    # Verschiedene Proxy-Strategien
+    # Echte Browser-Header, um Blockaden zu umgehen
+    custom_headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+        "Referer": "https://patentscope.wipo.int/"
+    }
+
     proxies = [
         f"https://api.allorigins.win/get?url={encoded_target}",
         f"https://corsproxy.io/?{encoded_target}",
         f"https://api.codetabs.com/v1/proxy?quest={encoded_target}"
     ]
     
+    # Wir versuchen es etwas hartnäckiger
     for attempt in range(len(proxies)):
         proxy_url = proxies[attempt]
         try:
-            # Wartezeit vor jedem neuen Proxy-Versuch
+            # Erhöhte Wartezeit: WIPO braucht Zeit zum "Abkühlen"
             if attempt > 0:
-                time.sleep(5)
+                time.sleep(10) # 10 Sekunden Pause vor dem nächsten Proxy
             
-            resp = requests.get(proxy_url, timeout=35)
+            # Wir senden die Header an den Proxy (manche Proxies leiten diese weiter)
+            resp = requests.get(proxy_url, headers=custom_headers, timeout=40)
             
             if resp.status_code == 200:
                 content = ""
-                # Strategie A: AllOrigins (liefert JSON mit 'contents')
                 if "allorigins" in proxy_url:
                     try:
                         content = resp.json().get('contents', '')
-                    except:
-                        continue
-                # Strategie B: Direkte Text-Proxies (CORSProxy, Codetabs)
+                    except: continue
                 else:
                     content = resp.text
 
-                if not content or len(content) < 100: # Zu kurz für einen RSS-Feed
+                if not content or len(content) < 150:
                     continue
 
                 feed = feedparser.parse(content)
                 if not feed.entries:
+                    # Manchmal schickt WIPO eine leere Seite bei Blockade
                     continue
 
                 now = datetime.now()
@@ -73,12 +79,25 @@ def fetch_feed(row):
                 return entries
             
             else:
-                print(f"Versuch {attempt+1} ({name}): Proxy {attempt} meldet Status {resp.status_code}")
+                # Logge den Fehler, aber mache weiter
+                if resp.status_code != 404:
+                    print(f"Versuch {attempt+1} ({name}): Proxy {attempt} meldet {resp.status_code}")
 
-        except Exception as e:
-            print(f"Versuch {attempt+1} ({name}): Fehler bei Proxy {attempt}")
+        except Exception:
             continue
             
+    # Falls alle Proxies scheitern: Letzter verzweifelter Versuch OHNE Proxy
+    # Manchmal lässt WIPO GitHub-Server doch durch, wenn die Proxies überlastet sind
+    try:
+        resp = requests.get(url, headers=custom_headers, timeout=20)
+        if resp.status_code == 200:
+            feed = feedparser.parse(resp.text)
+            if feed.entries:
+                # Logik für Erfolg ohne Proxy... (analog zu oben)
+                return [{"title": e.get('title'), "link": e.get('link'), "source_name": name, "category": "WIPO", "is_new": True} for e in feed.entries[:5]]
+    except:
+        pass
+
     print(f"❌ Endgültig gescheitert: {name}")
     return []
 
