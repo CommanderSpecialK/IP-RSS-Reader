@@ -93,50 +93,49 @@ if check_password():
 
     def trigger_workflow_with_monitor():
         repo = st.secrets.get("repo_name", "").strip().strip("/")
-        workflow_filename = "daily.yml" # DEINE DATEI
+        workflow_filename = "daily.yml" 
         url = f"https://api.github.com/repos/{repo}/actions/workflows/{workflow_filename}/dispatches"
         
         resp = requests.post(url, headers=get_gh_headers(), json={"ref": "main"})
         
         if resp.status_code == 204:
-            placeholder = st.empty()
-            with placeholder.container():
-                st.info("⏳ Workflow angestoßen... Warte auf Start auf GitHub.")
-                time.sleep(5) # Kurze Pause, bis GitHub den Run registriert
+            # Ein Container, der sich selbst überschreibt
+            status_placeholder = st.empty()
+            
+            with status_placeholder.container():
+                st.info("🛰️ Verbindung zu GitHub hergestellt. Starte Abruf...")
+                time.sleep(5) # Puffer für GitHub-Registrierung
                 
-                progress_bar = st.progress(0)
-                status = "queued"
                 start_time = time.time()
+                status = "queued"
                 
                 while status not in ["completed", "unknown"]:
                     status, conclusion = get_workflow_status()
                     elapsed = int(time.time() - start_time)
                     
-                    if status == "queued":
-                        progress_bar.progress(10)
-                        st.write(f"🕒 In Warteschlange... ({elapsed}s)")
-                    elif status == "in_progress":
-                        progress_bar.progress(50)
-                        st.write(f"⚙️ Daten werden abgerufen... ({elapsed}s)")
+                    # Wir überschreiben den Inhalt des Containers in jedem Durchlauf
+                    with status_placeholder.container():
+                        if status == "queued":
+                            st.warning(f"🕒 In Warteschlange... (Dauer: {elapsed}s)")
+                        elif status == "in_progress":
+                            st.info(f"⚙️ Daten werden aktuell abgerufen... (Dauer: {elapsed}s)")
+                        
+                        if status == "completed":
+                            if conclusion == "success":
+                                st.success(f"✅ Fertig! Abruf nach {elapsed}s erfolgreich abgeschlossen.")
+                                time.sleep(3)
+                                st.rerun()
+                            else:
+                                st.error(f"❌ Abbruch: GitHub meldet Fehler '{conclusion}'.")
+                            break
                     
-                    if status == "completed":
-                        progress_bar.progress(100)
-                        if conclusion == "success":
-                            st.success("✅ Fertig! Neue Daten sind jetzt verfügbar.")
-                            time.sleep(3)
-                            st.rerun()
-                        else:
-                            st.error(f"❌ Workflow beendet mit Status: {conclusion}")
-                        break
-                    
-                    if elapsed > 300: # Timeout nach 5 Minuten
-                        st.warning("⏱️ Timeout: Der Workflow dauert länger als erwartet. Bitte später prüfen.")
+                    if elapsed > 300: # 5 Min Sicherheits-Stop
+                        st.error("⏱️ Zeitüberschreitung. Bitte Status direkt auf GitHub prüfen.")
                         break
                         
-                    time.sleep(10)
-            placeholder.empty()
+                    time.sleep(8) # Check-Intervall
         else:
-            st.error(f"Fehler beim Starten (Code {resp.status_code}). Prüfe daily.yml!")
+            st.error(f"Fehler {resp.status_code}: Workflow konnte nicht gestartet werden.")
 
     def sync_all():
         with st.spinner("Synchronisiere..."):
