@@ -18,7 +18,7 @@ if os.path.exists("logo.png"):
 
 st.set_page_config(page_title="WFL RSS Manager", page_icon=icon, layout="wide")
 
-# --- HILFSFUNKTIONEN FÜR ZEIT ---
+# --- HILFSFUNKTIONEN ---
 def get_next_run():
     now = datetime.utcnow()
     days_ahead = 4 - now.weekday()
@@ -56,11 +56,12 @@ def check_password():
     return False
 
 if check_password():
-    # --- 2. GITHUB API LOGIK ---
+    # --- GITHUB HEADERS ---
     def get_gh_headers():
         token = st.secrets.get("github_token", "").strip()
         return {"Authorization": f"token {token}", "Accept": "application/vnd.github.v3+json"}
 
+    # --- DATEN LADEN / SPEICHERN ---
     def load_from_github(filename):
         repo = st.secrets.get("repo_name", "").strip().strip("/")
         url = f"https://api.github.com/repos/{repo}/contents/{filename}?t={int(time.time())}"
@@ -69,108 +70,88 @@ if check_password():
             if resp.status_code == 200:
                 content = base64.b64decode(resp.json()['content']).decode("utf-8")
                 return content, "OK"
-            return None, f"Fehler {resp.status_code}"
-        except: return None, "Fehler"
+        except: pass
+        return None, "Fehler"
 
     def upload_file(filename, content, message):
         repo = st.secrets.get("repo_name", "").strip().strip("/")
+        headers = get_gh_headers()
         url = f"https://api.github.com/repos/{repo}/contents/{filename}"
-        r_get = requests.get(url, headers=get_gh_headers(), timeout=10)
+        r_get = requests.get(url, headers=headers, timeout=10)
         sha = r_get.json().get('sha') if r_get.status_code == 200 else None
         payload = {"message": message, "content": base64.b64encode(content.encode("utf-8")).decode("utf-8"), "sha": sha}
-        resp = requests.put(url, json=payload, headers=get_gh_headers(), timeout=15)
+        resp = requests.put(url, json=payload, headers=headers, timeout=15)
         return resp.status_code
 
-    def get_workflow_status():
+    # --- WORKFLOW MONITORING ---
+    def get_latest_run_id():
         repo = st.secrets.get("repo_name", "").strip().strip("/")
         url = f"https://api.github.com/repos/{repo}/actions/runs?per_page=1"
         try:
-            resp = requests.get(url, headers=get_gh_headers())
-            if resp.status_code == 200:
-                runs = resp.json().get("workflow_runs", [])
-                if runs:
-                    return runs[0]["status"], runs[0]["conclusion"]
-        except: pass
-        return "unknown", None
-
-def trigger_workflow_with_monitor():
-    repo = st.secrets.get("repo_name", "").strip().strip("/")
-    workflow_filename = "daily.yml" 
-    headers = get_gh_headers()
-    
-    # 1. ID des aktuellsten Runs VOR dem Start abrufen
-    def get_latest_run_id():
-        url = f"https://api.github.com/repos/{repo}/actions/runs?per_page=1"
-        try:
-            r = requests.get(url, headers=headers)
+            r = requests.get(url, headers=get_gh_headers())
             if r.status_code == 200:
                 runs = r.json().get("workflow_runs", [])
                 return runs[0]["id"] if runs else None
-        except: return None
+        except: pass
         return None
 
-    last_run_id = get_latest_run_id()
-    
-    # 2. Workflow starten
-    url_trigger = f"https://api.github.com/repos/{repo}/actions/workflows/{workflow_filename}/dispatches"
-    resp = requests.post(url_trigger, headers=headers, json={"ref": "main"})
-    
-    if resp.status_code == 204:
-        status_placeholder = st.empty()
-        with status_placeholder.container():
-            st.info("🛰️ Signal gesendet. Warte auf GitHub-Bestätigung...")
-            
-            start_time = time.time()
-            new_run_id = None
-            
-            # 3. Warten, bis ein NEUER Run erscheint (maximal 60s warten)
-            for _ in range(12): 
+    def trigger_workflow_with_monitor():
+        repo = st.secrets.get("repo_name", "").strip().strip("/")
+        workflow_filename = "daily.yml"
+        headers = get_gh_headers()
+        
+        last_run_id = get_latest_run_id()
+        url_trigger = f"https://api.github.com/repos/{repo}/actions/workflows/{workflow_filename}/dispatches"
+        resp = requests.post(url_trigger, headers=headers, json={"ref": "main"})
+        
+        if resp.status_code == 204:
+            status_placeholder = st.empty()
+            with status_placeholder.container():
+                st.info("🛰️ Signal gesendet. Warte auf GitHub-Bestätigung...")
                 time.sleep(5)
-                current_id = get_latest_run_id()
-                if current_id and current_id != last_run_id:
-                    new_run_id = current_id
-                    break
-            
-            if not new_run_id:
-                st.warning("Der Workflow wurde gestartet, aber GitHub braucht ungewöhnlich lange zum Antworten. Bitte Seite in 5 Min manuell laden.")
-                return
-
-            # 4. Den neuen Run überwachen
-            status = "queued"
-            while status not in ["completed", "unknown"]:
-                # Status des SPECIFIC runs abrufen
-                url_status = f"https://api.github.com/repos/{repo}/actions/runs/{new_run_id}"
-                r = requests.get(url_status, headers=headers)
-                if r.status_code == 200:
-                    data = r.json()
-                    status = data.get("status")
-                    conclusion = data.get("conclusion")
                 
-                elapsed = int(time.time() - start_time)
-                mins, secs = divmod(elapsed, 60)
-                time_str = f"{mins}m {secs}s"
+                start_time = time.time()
+                new_run_id = None
                 
-                with status_placeholder.container():
-                    if status == "queued":
-                        st.warning(f"🕒 In Warteschlange... (Laufzeit: {time_str})")
-                    elif status == "in_progress":
-                        st.info(f"⚙️ Daten werden aktuell abgerufen... (Laufzeit: {time_str})")
-                    
-                    if status == "completed":
-                        if conclusion == "success":
-                            st.success(f"✅ Fertig! Abruf nach {time_str} erfolgreich.")
-                            time.sleep(5)
-                            st.rerun()
-                        else:
-                            st.error(f"❌ GitHub Fehler: {conclusion}")
+                # Warte auf neue Run-ID
+                for _ in range(12):
+                    current_id = get_latest_run_id()
+                    if current_id and current_id != last_run_id:
+                        new_run_id = current_id
                         break
+                    time.sleep(5)
                 
-                if elapsed > 1200: # 20 Min Timeout
-                    st.error("⏱️ Zeitüberschreitung.")
-                    break
-                time.sleep(15)
-    else:
-        st.error(f"Fehler {resp.status_code}: Start fehlgeschlagen.")
+                if not new_run_id:
+                    st.warning("Workflow gestartet, aber keine neue ID gefunden. Bitte später prüfen.")
+                    return
+
+                status = "queued"
+                while status not in ["completed", "unknown"]:
+                    url_run = f"https://api.github.com/repos/{repo}/actions/runs/{new_run_id}"
+                    r = requests.get(url_run, headers=headers)
+                    if r.status_code == 200:
+                        data = r.json()
+                        status, conclusion = data.get("status"), data.get("conclusion")
+                    
+                    elapsed = int(time.time() - start_time)
+                    mins, secs = divmod(elapsed, 60)
+                    
+                    with status_placeholder.container():
+                        if status == "queued":
+                            st.warning(f"🕒 In Warteschlange... ({mins}m {secs}s)")
+                        elif status == "in_progress":
+                            st.info(f"⚙️ Daten werden abgerufen... ({mins}m {secs}s)")
+                        elif status == "completed":
+                            if conclusion == "success":
+                                st.success(f"✅ Fertig nach {mins}m {secs}s!")
+                                time.sleep(3)
+                                st.rerun()
+                            else:
+                                st.error(f"❌ Fehler: {conclusion}")
+                            break
+                    if elapsed > 1200: break
+                    time.sleep(15)
+        else: st.error("Start fehlgeschlagen.")
 
     def sync_all():
         with st.spinner("Synchronisiere..."):
@@ -187,7 +168,7 @@ def trigger_workflow_with_monitor():
                 st.success("✅ Synchronisiert!"); time.sleep(1); st.rerun()
             else: st.error("Fehler beim Speichern.")
 
-    # --- 3. INITIALES LADEN ---
+    # --- INITIALES LADEN ---
     if 'all_news_df' not in st.session_state:
         with st.spinner("Lade Daten..."):
             raw_w, _ = load_from_github("wichtig.txt")
@@ -206,7 +187,7 @@ def trigger_workflow_with_monitor():
                 st.session_state.feeds_df = pd.DataFrame(columns=["name", "url", "category"])
             st.session_state.unsaved_changes = False
 
-    # --- 4. SIDEBAR ---
+    # --- SIDEBAR ---
     with st.sidebar:
         st.title("🔓 ADMIN" if st.session_state.is_admin else "👤 USER")
         st.metric("Nächster Auto-Abruf in:", get_next_run())
@@ -214,8 +195,7 @@ def trigger_workflow_with_monitor():
         admin_mode = "Beiträge"
         if st.session_state.is_admin:
             admin_mode = st.radio("🛠️ Admin-Konsole", ["Beiträge", "Feeds verwalten", "Sperrliste"])
-            if st.button("🔄 Jetzt Abruf starten", use_container_width=True):
-                trigger_workflow_with_monitor()
+            if st.button("🔄 Jetzt Abruf starten", use_container_width=True): trigger_workflow_with_monitor()
             if st.session_state.unsaved_changes:
                 if st.button("💾 JETZT SPEICHERN", type="primary", use_container_width=True): sync_all()
             st.divider()
@@ -226,7 +206,7 @@ def trigger_workflow_with_monitor():
             search = st.text_input("🔍 Suche...")
         if st.button("🚪 Logout", use_container_width=True): st.session_state.password_correct = False; st.rerun()
 
-    # --- 5. HAUPTBEREICH ---
+    # --- HAUPTBEREICH ---
     if admin_mode == "Feeds verwalten" and st.session_state.is_admin:
         st.header("📋 RSS-Feeds verwalten")
         with st.expander("➕ Neuen Feed hinzufügen"):
@@ -238,8 +218,6 @@ def trigger_workflow_with_monitor():
                         new_row = pd.DataFrame([{"name": f_name, "url": f_url, "category": f_cat}])
                         st.session_state.feeds_df = pd.concat([st.session_state.feeds_df, new_row], ignore_index=True)
                         st.session_state.unsaved_changes = True; st.rerun()
-        
-        st.subheader("Aktive Feeds")
         for i, row in st.session_state.feeds_df.iterrows():
             c1, c2, c3, c4 = st.columns([0.3, 0.4, 0.2, 0.1])
             c1.write(f"**{row.get('name', '???')}**")
