@@ -11,23 +11,17 @@ from datetime import datetime, timedelta
 st.set_page_config(page_title="IP RSS Database Manager", layout="wide")
 
 def get_next_run():
-    """Berechnet die Zeit bis zum nächsten Freitag 03:17 UTC."""
     now = datetime.utcnow()
-    # Freitag ist Wochentag 4 (0=Montag)
     days_ahead = 4 - now.weekday()
     if days_ahead < 0 or (days_ahead == 0 and now.hour >= 3 and now.minute >= 17):
         days_ahead += 7
     next_run = datetime(now.year, now.month, now.day, 3, 17) + timedelta(days=days_ahead)
     diff = next_run - now
-    days = diff.days
-    hours, remainder = divmod(diff.seconds, 3600)
-    minutes, _ = divmod(remainder, 60)
-    return f"{days}d {hours}h {minutes}m"
+    return f"{diff.days}d {diff.seconds // 3600}h {(diff.seconds // 60) % 60}m"
 
 def check_password():
     if st.session_state.get("password_correct", False): return True
     if "login_mode" not in st.session_state: st.session_state["login_mode"] = "user"
-
     st.title("🔒 Database Login")
     if st.session_state["login_mode"] == "user":
         st.subheader("User Login")
@@ -49,13 +43,10 @@ def check_password():
                 st.session_state["password_correct"], st.session_state["is_admin"] = True, True
                 st.rerun()
             elif admin_pwd: st.error("Falsches Admin-Passwort")
-        if st.button("Zurück zum User-Login"):
-            st.session_state["login_mode"] = "user"
-            st.rerun()
+        if st.button("Zurück zum User-Login"): st.session_state["login_mode"] = "user"; st.rerun()
     return False
 
 if check_password():
-    # --- 2. GITHUB API LOGIK ---
     def get_gh_headers():
         token = st.secrets.get("github_token", "").strip()
         return {"Authorization": f"token {token}", "Accept": "application/vnd.github.v3+json"}
@@ -82,8 +73,7 @@ if check_password():
 
     def trigger_workflow():
         repo = st.secrets.get("repo_name", "").strip().strip("/")
-        workflow_id = "main.yml" 
-        url = f"https://api.github.com/repos/{repo}/actions/workflows/{workflow_id}/dispatches"
+        url = f"https://api.github.com/repos/{repo}/actions/workflows/main.yml/dispatches"
         resp = requests.post(url, headers=get_gh_headers(), json={"ref": "main"})
         if resp.status_code == 204: st.success("🚀 Workflow gestartet!")
         else: st.error(f"Fehler: {resp.status_code}")
@@ -93,7 +83,8 @@ if check_password():
             df = st.session_state.all_news_df
             g_content = "\n".join(sorted(list(st.session_state.geloeschte_artikel)))
             w_content = "\n".join(sorted(list(st.session_state.wichtige_artikel)))
-            f_content = st.session_state.feeds_df.to_csv(index=False)
+            # WICHTIG: Speichern mit Semikolon als Trenner
+            f_content = st.session_state.feeds_df.to_csv(index=False, sep=';')
             
             r1 = upload_file("news_cache.json", df.to_json(orient='records', indent=2), "Update Cache")
             r2 = upload_file("geloescht.txt", g_content, "Update Delete List")
@@ -102,10 +93,8 @@ if check_password():
 
             if all(r in [200, 201] for r in [r1, r2, r3, r4]):
                 st.session_state.unsaved_changes = False
-                st.success("✅ Synchronisiert!")
-                time.sleep(1)
-                st.rerun()
-            else: st.error("Fehler beim Speichern auf GitHub.")
+                st.success("✅ Synchronisiert!"); time.sleep(1); st.rerun()
+            else: st.error("Fehler beim Speichern.")
 
     # --- 3. INITIALES LADEN ---
     if 'all_news_df' not in st.session_state:
@@ -114,35 +103,28 @@ if check_password():
             st.session_state.wichtige_artikel = set(raw_w.splitlines()) if raw_w else set()
             raw_g, _ = load_from_github("geloescht.txt")
             st.session_state.geloeschte_artikel = set(raw_g.splitlines()) if raw_g else set()
-            
             raw_json, _ = load_from_github("news_cache.json")
-            if raw_json:
-                try: st.session_state.all_news_df = pd.DataFrame(json.loads(raw_json))
-                except: st.session_state.all_news_df = pd.DataFrame()
-            else: st.session_state.all_news_df = pd.DataFrame()
-            
+            st.session_state.all_news_df = pd.DataFrame(json.loads(raw_json)) if raw_json else pd.DataFrame()
             for col in ["source_name", "title", "link", "category"]:
                 if col not in st.session_state.all_news_df.columns: st.session_state.all_news_df[col] = None
-
-            # Feeds laden mit Spalten-Fix für KeyError
+            
+            # FEEDS LADEN MIT SEMIKOLON-CHECK
             raw_feeds, _ = load_from_github("feeds.csv")
             if raw_feeds:
-                st.session_state.feeds_df = pd.read_csv(io.StringIO(raw_feeds))
-                # Falls Datei existiert aber Spaltennamen falsch sind:
-                if "name" not in st.session_state.feeds_df.columns:
-                    st.session_state.feeds_df.columns = ["name", "url", "category"][:len(st.session_state.feeds_df.columns)]
+                # Nutzt sep=';' für deine spezielle CSV-Struktur
+                st.session_state.feeds_df = pd.read_csv(io.StringIO(raw_feeds), sep=';')
+                # Bereinigung falls Spaltennamen durch BOM oder Leerzeichen schmutzig sind
+                st.session_state.feeds_df.columns = [c.strip().replace('\ufeff', '') for c in st.session_state.feeds_df.columns]
             else:
                 st.session_state.feeds_df = pd.DataFrame(columns=["name", "url", "category"])
             
             st.session_state.unsaved_changes = False
-            st.session_state.active_folder = None
 
     # --- 4. SIDEBAR ---
     with st.sidebar:
         st.title("🔓 ADMIN" if st.session_state.is_admin else "👤 USER")
         st.metric("Nächster Auto-Abruf in:", get_next_run())
         st.divider()
-
         admin_mode = "Beiträge"
         if st.session_state.is_admin:
             admin_mode = st.radio("🛠️ Admin-Konsole", ["Beiträge", "Feeds verwalten", "Sperrliste"])
@@ -150,100 +132,74 @@ if check_password():
             if st.session_state.unsaved_changes:
                 if st.button("💾 JETZT SPEICHERN", type="primary", use_container_width=True): sync_all()
             st.divider()
-        
         if admin_mode == "Beiträge":
-            if st.button("📁 Alle zuklappen", use_container_width=True):
-                st.session_state.active_folder = None
-                st.rerun()
-            # Validiere Kategorien
+            if st.button("📁 Alle zuklappen", use_container_width=True): st.session_state.active_folder = None; st.rerun()
             valid_cats = st.session_state.all_news_df['category'].dropna().unique() if not st.session_state.all_news_df.empty else []
-            kats = sorted([str(k) for k in valid_cats if k])
-            view = st.radio("Filter", ["Alle"] + kats + ["⭐ Wichtig"])
+            view = st.radio("Filter", ["Alle"] + sorted([str(k) for k in valid_cats if k]) + ["⭐ Wichtig"])
             search = st.text_input("🔍 Suche...")
-        
-        if st.button("🚪 Logout", use_container_width=True):
-            st.session_state.password_correct = False
-            st.rerun()
+        if st.button("🚪 Logout", use_container_width=True): st.session_state.password_correct = False; st.rerun()
 
     # --- 5. HAUPTBEREICH ---
     if admin_mode == "Feeds verwalten" and st.session_state.is_admin:
         st.header("📋 RSS-Feeds verwalten")
-        with st.expander("➕ Neuen Feed hinzufügen", expanded=False):
+        with st.expander("➕ Neuen Feed hinzufügen"):
             with st.form("new_feed"):
                 f_name = st.text_input("Name der Quelle")
                 f_url = st.text_input("RSS-URL")
                 f_cat = st.selectbox("Kategorie", ["WIPO", "EPO", "Andere"])
-                if st.form_submit_button("Feed hinzufügen"):
+                if st.form_submit_button("Hinzufügen"):
                     if f_name and f_url:
                         new_row = pd.DataFrame([{"name": f_name, "url": f_url, "category": f_cat}])
                         st.session_state.feeds_df = pd.concat([st.session_state.feeds_df, new_row], ignore_index=True)
-                        st.session_state.unsaved_changes = True
-                        st.rerun()
-                    else: st.error("Bitte Name und URL ausfüllen.")
-
+                        st.session_state.unsaved_changes = True; st.rerun()
+        
         st.subheader("Aktive Feeds")
-        if not st.session_state.feeds_df.empty:
-            for i, row in st.session_state.feeds_df.iterrows():
-                # Sicherheitscheck für Spaltenzugriff
-                name = row.get('name', 'Unbenannt')
-                url = row.get('url', 'Keine URL')
-                cat = row.get('category', 'Keine Kategorie')
-                
-                c1, c2, c3, c4 = st.columns([0.3, 0.4, 0.2, 0.1])
-                c1.write(f"**{name}**")
-                c2.write(f"`{str(url)[:40]}...`")
-                c3.write(f"🏷️ {cat}")
-                if c4.button("🗑️", key=f"del_f_{i}"):
-                    st.session_state.feeds_df = st.session_state.feeds_df.drop(i).reset_index(drop=True)
-                    st.session_state.unsaved_changes = True
-                    st.rerun()
-                st.divider()
-        else: st.info("Keine Feeds konfiguriert.")
+        for i, row in st.session_state.feeds_df.iterrows():
+            c1, c2, c3, c4 = st.columns([0.3, 0.4, 0.2, 0.1])
+            c1.write(f"**{row.get('name', '???')}**")
+            c2.write(f"`{str(row.get('url', ''))[:40]}...`")
+            c3.write(f"🏷️ {row.get('category', '---')}")
+            if c4.button("🗑️", key=f"del_f_{i}"):
+                st.session_state.feeds_df = st.session_state.feeds_df.drop(i).reset_index(drop=True)
+                st.session_state.unsaved_changes = True; st.rerun()
+            st.divider()
 
     elif admin_mode == "Sperrliste" and st.session_state.is_admin:
         st.header("🗑️ Sperrliste")
-        geloescht_liste = sorted(list(st.session_state.geloeschte_artikel))
-        if not geloescht_liste: st.info("Sperrliste ist leer.")
+        g_liste = sorted(list(st.session_state.geloeschte_artikel))
+        if not g_liste: st.info("Sperrliste ist leer.")
         else:
-            for link in geloescht_liste:
+            for l in g_liste:
                 c1, c2 = st.columns([0.8, 0.2])
-                c1.write(link)
-                if c2.button("Wiederherstellen", key=f"rev_{link}"):
-                    st.session_state.geloeschte_artikel.remove(link)
-                    st.session_state.unsaved_changes = True
-                    st.rerun()
-
-    else: # Beiträge-Modus
+                c1.write(l)
+                if c2.button("Wiederherstellen", key=f"rev_{l}"):
+                    st.session_state.geloeschte_artikel.remove(l)
+                    st.session_state.unsaved_changes = True; st.rerun()
+    else:
         df_disp = st.session_state.all_news_df.copy()
         if not df_disp.empty:
             df_disp = df_disp[~df_disp['link'].isin(st.session_state.geloeschte_artikel)]
             if view == "⭐ Wichtig": df_disp = df_disp[df_disp['link'].isin(st.session_state.wichtige_artikel)]
             elif view != "Alle": df_disp = df_disp[df_disp['category'] == view]
             if search: df_disp = df_disp[df_disp['title'].str.contains(search, case=False, na=False)]
-
         st.header(f"Beiträge: {view} ({len(df_disp)})")
-        if not df_disp.empty and "source_name" in df_disp.columns and df_disp["source_name"].notna().any():
+        if not df_disp.empty and "source_name" in df_disp.columns:
             for q, group in df_disp.groupby("source_name"):
                 with st.expander(f"📂 {q} ({len(group)})", expanded=(st.session_state.get("active_folder") == q)):
                     if st.session_state.is_admin:
                         if st.button(f"🗑️ Ordner leeren", key=f"bulk_{q}"):
                             st.session_state.geloeschte_artikel.update(group['link'].tolist())
-                            st.session_state.unsaved_changes, st.session_state.active_folder = True, q
-                            st.rerun()
+                            st.session_state.unsaved_changes, st.session_state.active_folder = True, q; st.rerun()
                     for i, row in group.iterrows():
-                        l = row['link']
-                        is_f = l in st.session_state.wichtige_artikel
+                        l, is_f = row['link'], row['link'] in st.session_state.wichtige_artikel
                         c1, c2, c3 = st.columns([0.8, 0.1, 0.1])
                         c1.markdown(f"{'⭐ ' if is_f else ''}**[{row['title']}]({l})**")
                         if st.session_state.is_admin:
                             if c2.button("⭐", key=f"f_{q}_{i}"):
-                                if is_f: st.session_state.wichtige_artikel.remove(l)
-                                else: st.session_state.wichtige_artikel.add(l)
-                                st.session_state.unsaved_changes, st.session_state.active_folder = True, q
-                                st.rerun()
+                                st.session_state.wichtige_artikel.remove(l) if is_f else st.session_state.wichtige_artikel.add(l)
+                                st.session_state.unsaved_changes, st.session_state.active_folder = True, q; st.rerun()
                             if c3.button("🗑️", key=f"d_{q}_{i}"):
                                 st.session_state.geloeschte_artikel.add(l)
-                                st.session_state.unsaved_changes, st.session_state.active_folder = True, q
-                                st.rerun()
+                                st.session_state.unsaved_changes, st.session_state.active_folder = True, q; st.rerun()
                         st.divider()
         else: st.info("Keine Einträge gefunden.")
