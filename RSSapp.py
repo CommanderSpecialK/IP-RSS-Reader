@@ -4,59 +4,39 @@ import requests
 import base64
 import json
 import time
+import io
 
 # --- 1. SETUP ---
 st.set_page_config(page_title="IP RSS Database Manager", layout="wide")
 
 def check_password():
-    """Rendert das Login-Interface mit Enter-Unterstützung."""
-    if st.session_state.get("password_correct", False):
-        return True
-
-    if "login_mode" not in st.session_state:
-        st.session_state["login_mode"] = "user"
+    if st.session_state.get("password_correct", False): return True
+    if "login_mode" not in st.session_state: st.session_state["login_mode"] = "user"
 
     st.title("🔒 Database Login")
-    
-    # --- LOGIN MASKE ---
     if st.session_state["login_mode"] == "user":
         st.subheader("User Login")
-        # Das Passwort-Feld
         user_pwd = st.text_input("User Passwort", type="password", key="pwd_user")
-        
-        # Prüfung erfolgt bei Klick ODER Enter
-        if st.button("Einloggen", type="primary", key="btn_user") or user_pwd:
-            if user_pwd: # Nur prüfen, wenn auch etwas eingegeben wurde
-                if user_pwd == st.secrets.get("password", "admin"):
-                    st.session_state["password_correct"] = True
-                    st.session_state["is_admin"] = False
-                    st.rerun()
-                elif user_pwd != "":
-                    st.error("Falsches Passwort")
-        
+        if st.button("Einloggen", type="primary") or user_pwd:
+            if user_pwd == st.secrets.get("password", "admin"):
+                st.session_state["password_correct"], st.session_state["is_admin"] = True, False
+                st.rerun()
+            elif user_pwd: st.error("Falsches Passwort")
         st.divider()
         if st.button("Hier klicken für Admin-Login"):
             st.session_state["login_mode"] = "admin"
             st.rerun()
-
     else:
         st.subheader("🛠️ Admin Login")
         admin_pwd = st.text_input("Admin Passwort", type="password", key="pwd_admin")
-        
-        # Prüfung erfolgt bei Klick ODER Enter
-        if st.button("Admin Login", type="primary", key="btn_admin") or admin_pwd:
-            if admin_pwd:
-                if admin_pwd == st.secrets.get("admin_password", "superadmin"):
-                    st.session_state["password_correct"] = True
-                    st.session_state["is_admin"] = True
-                    st.rerun()
-                elif admin_pwd != "":
-                    st.error("Falsches Admin-Passwort")
-        
+        if st.button("Admin Login", type="primary") or admin_pwd:
+            if admin_pwd == st.secrets.get("admin_password", "superadmin"):
+                st.session_state["password_correct"], st.session_state["is_admin"] = True, True
+                st.rerun()
+            elif admin_pwd: st.error("Falsches Admin-Passwort")
         if st.button("Zurück zum User-Login"):
             st.session_state["login_mode"] = "user"
             st.rerun()
-
     return False
 
 if check_password():
@@ -81,7 +61,6 @@ if check_password():
         url = f"https://api.github.com/repos/{repo}/contents/{filename}"
         r_get = requests.get(url, headers=get_gh_headers(), timeout=10)
         sha = r_get.json().get('sha') if r_get.status_code == 200 else None
-        
         payload = {
             "message": message,
             "content": base64.b64encode(content.encode("utf-8")).decode("utf-8"),
@@ -90,142 +69,141 @@ if check_password():
         resp = requests.put(url, json=payload, headers=get_gh_headers(), timeout=15)
         return resp.status_code
 
-    def sync_and_cleanup():
-        if not st.session_state.get("is_admin", False):
-            st.error("Nur Admins dürfen speichern.")
-            return
+    def sync_all():
+        with st.spinner("Synchronisiere mit GitHub..."):
+            # 1. News & Listen
+            df = st.session_state.all_news_df
+            geloescht_content = "\n".join(sorted(list(st.session_state.geloeschte_artikel)))
+            wichtig_content = "\n".join(sorted(list(st.session_state.wichtige_artikel)))
+            
+            # 2. Feeds CSV (falls vorhanden)
+            feeds_content = st.session_state.feeds_df.to_csv(index=False) if 'feeds_df' in st.session_state else None
 
-        try:
-            with st.spinner("Synchronisiere Daten..."):
-                df = st.session_state.all_news_df
-                geloescht_set = st.session_state.geloeschte_artikel
-                
-                df_cleaned = df[~df['link'].isin(geloescht_set)] if not df.empty and geloescht_set else df
+            res1 = upload_file("news_cache.json", df.to_json(orient='records', indent=2), "Update Cache")
+            res2 = upload_file("geloescht.txt", geloescht_content, "Update Delete List")
+            res3 = upload_file("wichtig.txt", wichtig_content, "Update Favorites")
+            
+            success = [res1, res2, res3]
+            if feeds_content:
+                res4 = upload_file("feeds.csv", feeds_content, "Update Feeds")
+                success.append(res4)
 
-                new_cache_json = df_cleaned.to_dict(orient='records')
-                geloescht_content = "\n".join(sorted(list(geloescht_set)))
-                wichtig_content = "\n".join(sorted(list(st.session_state.wichtige_artikel)))
-                
-                res1 = upload_file("news_cache.json", json.dumps(new_cache_json, indent=2), "DB Cleanup")
-                res2 = upload_file("geloescht.txt", geloescht_content, "Update Delete List")
-                res3 = upload_file("wichtig.txt", wichtig_content, "Update Favorites")
-
-                if res1 in [200, 201] and res2 in [200, 201] and res3 in [200, 201]:
-                    st.session_state.all_news_df = df_cleaned
-                    st.session_state.unsaved_changes = False
-                    st.success("✅ Synchronisiert!")
-                    time.sleep(1)
-                    st.rerun()
-                else:
-                    st.error(f"GitHub Fehler: {res1}, {res2}, {res3}")
-        except Exception as e:
-            st.error(f"Fehler: {e}")
+            if all(r in [200, 201] for r in success):
+                st.session_state.unsaved_changes = False
+                st.success("✅ Alles gespeichert!")
+                time.sleep(1)
+                st.rerun()
+            else: st.error("Fehler beim Speichern auf GitHub.")
 
     # --- 3. INITIALES LADEN ---
     if 'all_news_df' not in st.session_state:
-        with st.spinner("Lade Master-Datenbank..."):
-            raw_w, _ = load_from_github("wichtig.txt")
-            st.session_state.wichtige_artikel = set(raw_w.splitlines()) if raw_w else set()
-            raw_g, _ = load_from_github("geloescht.txt")
-            st.session_state.geloeschte_artikel = set(raw_g.splitlines()) if raw_g else set()
-            raw_json, _ = load_from_github("news_cache.json")
-            st.session_state.all_news_df = pd.DataFrame(json.loads(raw_json)) if raw_json else pd.DataFrame()
-            st.session_state.unsaved_changes = False
-            st.session_state.active_folder = None
+        raw_w, _ = load_from_github("wichtig.txt")
+        st.session_state.wichtige_artikel = set(raw_w.splitlines()) if raw_w else set()
+        raw_g, _ = load_from_github("geloescht.txt")
+        st.session_state.geloeschte_artikel = set(raw_g.splitlines()) if raw_g else set()
+        raw_json, _ = load_from_github("news_cache.json")
+        st.session_state.all_news_df = pd.DataFrame(json.loads(raw_json)) if raw_json else pd.DataFrame()
+        
+        # Lade Feeds
+        raw_feeds, _ = load_from_github("feeds.csv")
+        if raw_feeds: st.session_state.feeds_df = pd.read_csv(io.StringIO(raw_feeds))
+        
+        st.session_state.unsaved_changes = False
+        st.session_state.active_folder = None
 
     # --- 4. SIDEBAR ---
     with st.sidebar:
-        status_text = "🔓 ADMIN MODUS" if st.session_state.is_admin else "👤 USER MODUS"
-        st.title(status_text)
+        st.title("🔓 ADMIN" if st.session_state.is_admin else "👤 LESER")
         
-        if st.session_state.is_admin and st.session_state.unsaved_changes:
-            st.warning("⚠️ Änderungen vorhanden")
-            if st.button("💾 SPEICHERN", type="primary", use_container_width=True):
-                sync_and_cleanup()
-        elif not st.session_state.is_admin:
-            st.info("Änderungen deaktiviert (Nur-Lese-Modus)")
-        else:
-            st.success("☁️ Synchron")
-            
+        # Admin Menü
+        admin_mode = "Beiträge"
+        if st.session_state.is_admin:
+            st.divider()
+            admin_mode = st.radio("🛠️ Admin-Konsole", ["Beiträge", "Feeds verwalten", "Sperrliste"])
+            if st.session_state.unsaved_changes:
+                if st.button("💾 JETZT SPEICHERN", type="primary", use_container_width=True): sync_all()
+        
         st.divider()
-        if st.button("📁 Alle zuklappen", use_container_width=True):
-            st.session_state.active_folder = None
-            st.rerun()
-            
-        if not st.session_state.all_news_df.empty:
-            kats = sorted([str(k) for k in st.session_state.all_news_df['category'].unique() if k])
-            options = ["Alle"] + kats + ["⭐ Wichtig"]
-        else:
-            options = ["Alle", "⭐ Wichtig"]
-
-        view = st.radio("Ansicht filtern", options)
-        search = st.text_input("🔍 Suche...")
+        if admin_mode == "Beiträge":
+            if st.button("📁 Alle zuklappen", use_container_width=True):
+                st.session_state.active_folder = None
+                st.rerun()
+            kats = sorted([str(k) for k in st.session_state.all_news_df['category'].unique() if k]) if not st.session_state.all_news_df.empty else []
+            view = st.radio("Filter", ["Alle"] + kats + ["⭐ Wichtig"])
+            search = st.text_input("🔍 Suche...")
         
         if st.button("🚪 Logout", use_container_width=True):
             st.session_state.password_correct = False
             st.rerun()
 
-    # --- 5. FILTERING ---
-    df_display = st.session_state.all_news_df.copy()
-    if not df_display.empty:
-        df_display = df_display[~df_display['link'].isin(st.session_state.geloeschte_artikel)]
-        if view == "⭐ Wichtig":
-            df_display = df_display[df_display['link'].isin(st.session_state.wichtige_artikel)]
-        elif view != "Alle":
-            df_display = df_display[df_display['category'] == view]
-        if search:
-            df_display = df_display[df_display['title'].str.contains(search, case=False, na=False)]
+    # --- 5. HAUPTBEREICH ---
+    if admin_mode == "Feeds verwalten" and st.session_state.is_admin:
+        st.header("📋 RSS-Feeds verwalten")
+        
+        with st.expander("➕ Neuen Feed hinzufügen", expanded=True):
+            with st.form("new_feed"):
+                f_name = st.text_input("Name der Quelle (z.B. Firma XY)")
+                f_url = st.text_input("RSS-URL")
+                f_cat = st.selectbox("Kategorie", ["WIPO", "EPO", "Andere"])
+                if st.form_submit_button("Feed hinzufügen"):
+                    new_row = pd.DataFrame([{"name": f_name, "url": f_url, "category": f_cat}])
+                    st.session_state.feeds_df = pd.concat([st.session_state.feeds_df, new_row], ignore_index=True)
+                    st.session_state.unsaved_changes = True
+                    st.success(f"Feed {f_name} vorgemerkt. Bitte Speichern nicht vergessen!")
+        
+        st.subheader("Aktuelle Feeds")
+        st.dataframe(st.session_state.feeds_df, use_container_width=True)
+        if st.button("Letzten Feed entfernen"):
+            st.session_state.feeds_df = st.session_state.feeds_df[:-1]
+            st.session_state.unsaved_changes = True
+            st.rerun()
 
-    # --- 6. DISPLAY ---
-    st.header(f"Beiträge: {view} ({len(df_display)})")
-    if not df_display.empty:
+    elif admin_mode == "Sperrliste" and st.session_state.is_admin:
+        st.header("🗑️ Sperrliste (geloescht.txt)")
+        st.write("Einträge in dieser Liste werden beim nächsten Sync endgültig aus dem Cache entfernt.")
+        
+        geloescht_liste = sorted(list(st.session_state.geloeschte_artikel))
+        if not geloescht_liste:
+            st.info("Die Sperrliste ist leer.")
+        else:
+            for link in geloescht_liste:
+                c1, c2 = st.columns([0.8, 0.2])
+                c1.write(link)
+                if c2.button("Wiederherstellen", key=f"rev_{link}"):
+                    st.session_state.geloeschte_artikel.remove(link)
+                    st.session_state.unsaved_changes = True
+                    st.rerun()
+
+    else: # Normaler "Beiträge" Modus
+        df_display = st.session_state.all_news_df.copy()
+        if not df_display.empty:
+            df_display = df_display[~df_display['link'].isin(st.session_state.geloeschte_artikel)]
+            if view == "⭐ Wichtig": df_display = df_display[df_display['link'].isin(st.session_state.wichtige_artikel)]
+            elif view != "Alle": df_display = df_display[df_display['category'] == view]
+            if search: df_display = df_display[df_display['title'].str.contains(search, case=False, na=False)]
+
+        st.header(f"Beiträge: {view} ({len(df_display)})")
         for q, group in df_display.groupby("source_name"):
-            is_expanded = (st.session_state.active_folder == q)
-            
-            with st.expander(f"📂 {q} ({len(group)})", expanded=is_expanded):
-                
-                # ADMIN: Ordner leeren
+            with st.expander(f"📂 {q} ({len(group)})", expanded=(st.session_state.active_folder == q)):
                 if st.session_state.is_admin:
-                    confirm_key = f"confirm_delete_{q}"
-                    if st.button(f"🗑️ Ordner leeren", key=f"bulk_{q}", use_container_width=True):
-                        st.session_state[confirm_key] = True
-
-                    if st.session_state.get(confirm_key, False):
-                        st.warning("Ordner leeren?")
-                        if st.button("✅ Ja", key=f"yes_{q}", type="primary"):
-                            st.session_state.geloeschte_artikel.update(group['link'].tolist())
-                            st.session_state.unsaved_changes = True
-                            st.session_state.active_folder = q 
-                            st.session_state[confirm_key] = False
-                            st.rerun()
-                        if st.button("❌ Nein", key=f"no_{q}"):
-                            st.session_state[confirm_key] = False
-                            st.rerun()
-                    st.divider()
-
-                # Einträge anzeigen
+                    if st.button(f"🗑️ Ordner leeren", key=f"bulk_{q}"):
+                        st.session_state.geloeschte_artikel.update(group['link'].tolist())
+                        st.session_state.unsaved_changes = True
+                        st.session_state.active_folder = q
+                        st.rerun()
+                
                 for i, row in group.iterrows():
                     link = row['link']
                     is_fav = link in st.session_state.wichtige_artikel
-                    
-                    # Layout anpassen je nach Rolle
+                    c1, c2, c3 = st.columns([0.8, 0.1, 0.1])
+                    c1.markdown(f"{'⭐ ' if is_fav else ''}**[{row['title']}]({link})**")
                     if st.session_state.is_admin:
-                        c1, c2, c3 = st.columns([0.8, 0.1, 0.1])
-                        c1.markdown(f"{'⭐ ' if is_fav else ''}**[{row['title']}]({link})**")
                         if c2.button("⭐", key=f"f_{q}_{i}"):
-                            if is_fav: st.session_state.wichtige_artikel.remove(link)
-                            else: st.session_state.wichtige_artikel.add(link)
-                            st.session_state.unsaved_changes = True
-                            st.session_state.active_folder = q 
+                            st.session_state.wichtige_artikel.remove(link) if is_fav else st.session_state.wichtige_artikel.add(link)
+                            st.session_state.unsaved_changes, st.session_state.active_folder = True, q
                             st.rerun()
                         if c3.button("🗑️", key=f"d_{q}_{i}"):
                             st.session_state.geloeschte_artikel.add(link)
-                            st.session_state.unsaved_changes = True
-                            st.session_state.active_folder = q 
+                            st.session_state.unsaved_changes, st.session_state.active_folder = True, q
                             st.rerun()
-                    else:
-                        # Leser sieht nur den Link (und Stern falls vorhanden)
-                        st.markdown(f"{'⭐ ' if is_fav else ''}**[{row['title']}]({link})**")
                     st.divider()
-    else:
-        st.info("Keine Einträge gefunden.")
