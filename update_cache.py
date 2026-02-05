@@ -17,35 +17,39 @@ def fetch_feed(row):
     name = str(row.get('name', 'Unbekannt'))
     encoded_target = requests.utils.quote(url)
     
-    # Liste von Proxy-Diensten zum Durchrotieren
+    # Verschiedene Proxy-Strategien
     proxies = [
         f"https://api.allorigins.win/get?url={encoded_target}",
-        f"https://corsproxy.io/?{encoded_target}"
+        f"https://corsproxy.io/?{encoded_target}",
+        f"https://api.codetabs.com/v1/proxy?quest={encoded_target}"
     ]
     
-    for attempt in range(len(proxies) * 2): # Versucht jeden Proxy zweimal
-        proxy_url = proxies[attempt % len(proxies)]
-        
+    for attempt in range(len(proxies)):
+        proxy_url = proxies[attempt]
         try:
-            # Wartezeit zwischen den Versuchen erhöhen (2s, 4s, 6s...)
+            # Wartezeit vor jedem neuen Proxy-Versuch
             if attempt > 0:
-                time.sleep(attempt * 2)
+                time.sleep(5)
             
-            resp = requests.get(proxy_url, timeout=30)
+            resp = requests.get(proxy_url, timeout=35)
             
             if resp.status_code == 200:
-                data = resp.json()
-                # AllOrigins liefert 'contents', CORSProxy liefert oft direkt den Text
-                feed_raw_content = data.get('contents') if isinstance(data, dict) else resp.text
-                
-                if not feed_raw_content:
+                content = ""
+                # Strategie A: AllOrigins (liefert JSON mit 'contents')
+                if "allorigins" in proxy_url:
+                    try:
+                        content = resp.json().get('contents', '')
+                    except:
+                        continue
+                # Strategie B: Direkte Text-Proxies (CORSProxy, Codetabs)
+                else:
+                    content = resp.text
+
+                if not content or len(content) < 100: # Zu kurz für einen RSS-Feed
                     continue
 
-                feed = feedparser.parse(feed_raw_content)
-                
-                # Check ob der Feed überhaupt Einträge hat
+                feed = feedparser.parse(content)
                 if not feed.entries:
-                    print(f"Versuch {attempt+1}: Feed für {name} leer (WIPO Block?)")
                     continue
 
                 now = datetime.now()
@@ -69,12 +73,13 @@ def fetch_feed(row):
                 return entries
             
             else:
-                print(f"Versuch {attempt+1} Proxy-Fehler {resp.status_code} für {name}")
+                print(f"Versuch {attempt+1} ({name}): Proxy {attempt} meldet Status {resp.status_code}")
 
         except Exception as e:
-            print(f"Versuch {attempt+1} technischer Fehler für {name}: {str(e)[:50]}")
+            print(f"Versuch {attempt+1} ({name}): Fehler bei Proxy {attempt}")
+            continue
             
-    print(f"❌ Endgültig gescheitert nach allen Proxies: {name}")
+    print(f"❌ Endgültig gescheitert: {name}")
     return []
 
 def update_cache():
@@ -102,17 +107,19 @@ def update_cache():
         print(f"CSV Fehler: {e}")
         return
 
-    # 3. Sequentieller Abruf (max_workers=1 für höchste Stabilität)
+    # 3. Sequentieller Abruf
     print(f"Starte Abruf von {len(df_feeds)} Quellen...")
     all_entries = []
+    # Wichtig: max_workers=1 lassen, um WIPO nicht zu "stressen"
     with ThreadPoolExecutor(max_workers=1) as executor:
         results = list(executor.map(fetch_feed, [row for _, row in df_feeds.iterrows()]))
     
     # 4. Zusammenführen und Filtern
     for res in results:
-        for entry in res:
-            if entry['link'] not in sperrliste:
-                all_entries.append(entry)
+        if res:
+            for entry in res:
+                if entry['link'] not in sperrliste:
+                    all_entries.append(entry)
 
     # 5. Sortieren & Archiv (Top 1000)
     all_entries.sort(key=lambda x: x['pub_sort'], reverse=True)
