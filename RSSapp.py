@@ -9,11 +9,10 @@ import time
 st.set_page_config(page_title="IP RSS Database Manager", layout="wide")
 
 def check_password():
-    """Rendert das Login-Interface mit Umschalt-Option."""
+    """Rendert das Login-Interface mit Enter-Unterstützung."""
     if st.session_state.get("password_correct", False):
         return True
 
-    # Initialisiere den Login-Modus, falls nicht vorhanden
     if "login_mode" not in st.session_state:
         st.session_state["login_mode"] = "user"
 
@@ -22,16 +21,18 @@ def check_password():
     # --- LOGIN MASKE ---
     if st.session_state["login_mode"] == "user":
         st.subheader("User Login")
-        user_pwd = st.text_input("User Passwort", type="password")
+        # Das Passwort-Feld
+        user_pwd = st.text_input("User Passwort", type="password", key="pwd_user")
         
-        col1, col2 = st.columns([0.2, 0.8])
-        if col1.button("Einloggen", type="primary"):
-            if user_pwd == st.secrets.get("password", "admin"):
-                st.session_state["password_correct"] = True
-                st.session_state["is_admin"] = False
-                st.rerun()
-            else:
-                st.error("Falsches Passwort")
+        # Prüfung erfolgt bei Klick ODER Enter
+        if st.button("Einloggen", type="primary", key="btn_user") or user_pwd:
+            if user_pwd: # Nur prüfen, wenn auch etwas eingegeben wurde
+                if user_pwd == st.secrets.get("password", "admin"):
+                    st.session_state["password_correct"] = True
+                    st.session_state["is_admin"] = False
+                    st.rerun()
+                elif user_pwd != "":
+                    st.error("Falsches Passwort")
         
         st.divider()
         if st.button("Hier klicken für Admin-Login"):
@@ -40,16 +41,17 @@ def check_password():
 
     else:
         st.subheader("🛠️ Admin Login")
-        admin_pwd = st.text_input("Admin Passwort", type="password")
+        admin_pwd = st.text_input("Admin Passwort", type="password", key="pwd_admin")
         
-        col1, col2 = st.columns([0.2, 0.8])
-        if col1.button("Admin Login", type="primary"):
-            if admin_pwd == st.secrets.get("admin_password", "superadmin"):
-                st.session_state["password_correct"] = True
-                st.session_state["is_admin"] = True
-                st.rerun()
-            else:
-                st.error("Falsches Admin-Passwort")
+        # Prüfung erfolgt bei Klick ODER Enter
+        if st.button("Admin Login", type="primary", key="btn_admin") or admin_pwd:
+            if admin_pwd:
+                if admin_pwd == st.secrets.get("admin_password", "superadmin"):
+                    st.session_state["password_correct"] = True
+                    st.session_state["is_admin"] = True
+                    st.rerun()
+                elif admin_pwd != "":
+                    st.error("Falsches Admin-Passwort")
         
         if st.button("Zurück zum User-Login"):
             st.session_state["login_mode"] = "user"
