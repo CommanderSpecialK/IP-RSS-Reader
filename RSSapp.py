@@ -114,20 +114,32 @@ if check_password():
             st.session_state.wichtige_artikel = set(raw_w.splitlines()) if raw_w else set()
             raw_g, _ = load_from_github("geloescht.txt")
             st.session_state.geloeschte_artikel = set(raw_g.splitlines()) if raw_g else set()
+            
             raw_json, _ = load_from_github("news_cache.json")
-            st.session_state.all_news_df = pd.DataFrame(json.loads(raw_json)) if raw_json else pd.DataFrame()
+            if raw_json:
+                try: st.session_state.all_news_df = pd.DataFrame(json.loads(raw_json))
+                except: st.session_state.all_news_df = pd.DataFrame()
+            else: st.session_state.all_news_df = pd.DataFrame()
+            
             for col in ["source_name", "title", "link", "category"]:
                 if col not in st.session_state.all_news_df.columns: st.session_state.all_news_df[col] = None
+
+            # Feeds laden mit Spalten-Fix für KeyError
             raw_feeds, _ = load_from_github("feeds.csv")
-            if raw_feeds: st.session_state.feeds_df = pd.read_csv(io.StringIO(raw_feeds))
-            else: st.session_state.feeds_df = pd.DataFrame(columns=["name", "url", "category"])
+            if raw_feeds:
+                st.session_state.feeds_df = pd.read_csv(io.StringIO(raw_feeds))
+                # Falls Datei existiert aber Spaltennamen falsch sind:
+                if "name" not in st.session_state.feeds_df.columns:
+                    st.session_state.feeds_df.columns = ["name", "url", "category"][:len(st.session_state.feeds_df.columns)]
+            else:
+                st.session_state.feeds_df = pd.DataFrame(columns=["name", "url", "category"])
+            
             st.session_state.unsaved_changes = False
+            st.session_state.active_folder = None
 
     # --- 4. SIDEBAR ---
     with st.sidebar:
         st.title("🔓 ADMIN" if st.session_state.is_admin else "👤 USER")
-        
-        # Countdown Timer
         st.metric("Nächster Auto-Abruf in:", get_next_run())
         st.divider()
 
@@ -143,7 +155,9 @@ if check_password():
             if st.button("📁 Alle zuklappen", use_container_width=True):
                 st.session_state.active_folder = None
                 st.rerun()
-            kats = sorted([str(k) for k in st.session_state.all_news_df['category'].unique() if k])
+            # Validiere Kategorien
+            valid_cats = st.session_state.all_news_df['category'].dropna().unique() if not st.session_state.all_news_df.empty else []
+            kats = sorted([str(k) for k in valid_cats if k])
             view = st.radio("Filter", ["Alle"] + kats + ["⭐ Wichtig"])
             search = st.text_input("🔍 Suche...")
         
@@ -160,22 +174,31 @@ if check_password():
                 f_url = st.text_input("RSS-URL")
                 f_cat = st.selectbox("Kategorie", ["WIPO", "EPO", "Andere"])
                 if st.form_submit_button("Feed hinzufügen"):
-                    new_row = pd.DataFrame([{"name": f_name, "url": f_url, "category": f_cat}])
-                    st.session_state.feeds_df = pd.concat([st.session_state.feeds_df, new_row], ignore_index=True)
-                    st.session_state.unsaved_changes = True
-                    st.rerun()
+                    if f_name and f_url:
+                        new_row = pd.DataFrame([{"name": f_name, "url": f_url, "category": f_cat}])
+                        st.session_state.feeds_df = pd.concat([st.session_state.feeds_df, new_row], ignore_index=True)
+                        st.session_state.unsaved_changes = True
+                        st.rerun()
+                    else: st.error("Bitte Name und URL ausfüllen.")
 
         st.subheader("Aktive Feeds")
-        for i, row in st.session_state.feeds_df.iterrows():
-            c1, c2, c3, c4 = st.columns([0.3, 0.4, 0.2, 0.1])
-            c1.write(f"**{row['name']}**")
-            c2.write(f"`{row['url'][:40]}...`")
-            c3.write(f"🏷️ {row['category']}")
-            if c4.button("🗑️", key=f"del_f_{i}"):
-                st.session_state.feeds_df = st.session_state.feeds_df.drop(i).reset_index(drop=True)
-                st.session_state.unsaved_changes = True
-                st.rerun()
-            st.divider()
+        if not st.session_state.feeds_df.empty:
+            for i, row in st.session_state.feeds_df.iterrows():
+                # Sicherheitscheck für Spaltenzugriff
+                name = row.get('name', 'Unbenannt')
+                url = row.get('url', 'Keine URL')
+                cat = row.get('category', 'Keine Kategorie')
+                
+                c1, c2, c3, c4 = st.columns([0.3, 0.4, 0.2, 0.1])
+                c1.write(f"**{name}**")
+                c2.write(f"`{str(url)[:40]}...`")
+                c3.write(f"🏷️ {cat}")
+                if c4.button("🗑️", key=f"del_f_{i}"):
+                    st.session_state.feeds_df = st.session_state.feeds_df.drop(i).reset_index(drop=True)
+                    st.session_state.unsaved_changes = True
+                    st.rerun()
+                st.divider()
+        else: st.info("Keine Feeds konfiguriert.")
 
     elif admin_mode == "Sperrliste" and st.session_state.is_admin:
         st.header("🗑️ Sperrliste")
@@ -199,7 +222,7 @@ if check_password():
             if search: df_disp = df_disp[df_disp['title'].str.contains(search, case=False, na=False)]
 
         st.header(f"Beiträge: {view} ({len(df_disp)})")
-        if not df_disp.empty and "source_name" in df_disp.columns:
+        if not df_disp.empty and "source_name" in df_disp.columns and df_disp["source_name"].notna().any():
             for q, group in df_disp.groupby("source_name"):
                 with st.expander(f"📂 {q} ({len(group)})", expanded=(st.session_state.get("active_folder") == q)):
                     if st.session_state.is_admin:
@@ -214,7 +237,8 @@ if check_password():
                         c1.markdown(f"{'⭐ ' if is_f else ''}**[{row['title']}]({l})**")
                         if st.session_state.is_admin:
                             if c2.button("⭐", key=f"f_{q}_{i}"):
-                                st.session_state.wichtige_artikel.remove(l) if is_f else st.session_state.wichtige_artikel.add(l)
+                                if is_f: st.session_state.wichtige_artikel.remove(l)
+                                else: st.session_state.wichtige_artikel.add(l)
                                 st.session_state.unsaved_changes, st.session_state.active_folder = True, q
                                 st.rerun()
                             if c3.button("🗑️", key=f"d_{q}_{i}"):
