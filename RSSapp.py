@@ -83,7 +83,7 @@ if check_password():
 
     def trigger_workflow():
         repo = st.secrets.get("repo_name", "").strip().strip("/")
-        url = f"https://api.github.com/repos/{repo}/actions/workflows/main.yml/dispatches"
+        url = f"https://api.github.com/repos/{repo}/actions/workflows/daily.yml/dispatches"
         resp = requests.post(url, headers=get_gh_headers(), json={"ref": "main"})
         if resp.status_code == 204: st.success("🚀 Workflow gestartet!")
         else: st.error(f"Fehler: {resp.status_code}")
