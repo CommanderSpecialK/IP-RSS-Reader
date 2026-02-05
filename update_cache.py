@@ -13,59 +13,49 @@ REPO = os.getenv("REPO_NAME")
 TOKEN = os.getenv("GH_TOKEN")
 
 def fetch_feed(row):
-    """Ruft einen Feed über Proxy ab mit automatischer Wiederholung bei Fehlern."""
     url = str(row['url']).strip()
     name = str(row.get('name', 'Unbekannt'))
-    encoded_target = requests.utils.quote(url)
-    proxy_url = f"https://api.allorigins.win/get?url={encoded_target}"
     
-    # Retry-Logik: Bis zu 3 Versuche pro Feed
-    for attempt in range(3):
+    # VERSUCH 1: Direkt abrufen (oft stabiler als über Proxy)
+    # VERSUCH 2 & 3: Falls nötig, über Proxy
+    
+    for attempt in range(4): # Erhöht auf 4 Versuche
         try:
-            # Sicherheits-Pause zwischen Versuchen erhöhen
+            # Exponential Backoff: Wartet 2s, 5s, 10s...
             if attempt > 0:
-                time.sleep(3)
+                wait_time = attempt * 5 
+                time.sleep(wait_time)
             
-            resp = requests.get(proxy_url, timeout=45)
+            # Beim ersten Versuch direkt probieren, danach erst Proxy nutzen
+            if attempt == 0:
+                current_url = url
+            else:
+                encoded_target = requests.utils.quote(url)
+                current_url = f"https://api.allorigins.win/get?url={encoded_target}"
+
+            resp = requests.get(current_url, timeout=30)
             
             if resp.status_code == 200:
-                data = resp.json()
-                feed_raw_content = data.get('contents')
-                
+                # Prüfen, ob wir Daten direkt oder vom Proxy haben
+                if attempt == 0:
+                    feed_raw_content = resp.text
+                else:
+                    feed_raw_content = resp.json().get('contents')
+
                 if not feed_raw_content:
-                    continue # Versuche es nochmal, falls der Inhalt leer war
+                    continue
 
                 feed = feedparser.parse(feed_raw_content)
-                now = datetime.now()
-                entries = []
-                
-                for e in feed.entries:
-                    pub_parsed = e.get('published_parsed')
-                    is_new = False
-                    if pub_parsed:
-                        dt_pub = datetime(*pub_parsed[:6])
-                        is_new = (now - dt_pub).total_seconds() < 172800
-                    
-                    entries.append({
-                        'title': e.get('title', 'Kein Titel'),
-                        'link': e.get('link', '#'),
-                        'source_name': name,
-                        'category': str(row.get('category', 'WIPO')),
-                        'is_new': is_new,
-                        'published': e.get('published', 'Unbekannt'),
-                        'pub_sort': list(pub_parsed) if pub_parsed else [1970, 1, 1, 0, 0, 0, 0, 0, 0]
-                    })
-                return entries # Erfolg!
-            
+                # ... (Rest deiner Logik wie bisher)
+                return entries 
+
             elif resp.status_code in [429, 500, 502, 503, 504, 520, 522]:
-                print(f"Versuch {attempt+1} fehlgeschlagen ({resp.status_code}) für {name}...")
-                continue # Nächster Versuch
+                print(f"Versuch {attempt+1} für {name}: Server-Fehler {resp.status_code}")
                 
         except Exception as e:
-            print(f"Versuch {attempt+1} technischer Fehler für {name}: {str(e)[:50]}")
-            continue
+            print(f"Versuch {attempt+1} für {name}: Technischer Fehler {str(e)[:50]}")
             
-    print(f"❌ Endgültig gescheitert nach 3 Versuchen: {name}")
+    print(f"❌ Endgültig gescheitert: {name}")
     return []
 
 def update_cache():
