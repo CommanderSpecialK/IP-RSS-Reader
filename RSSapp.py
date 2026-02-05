@@ -84,11 +84,13 @@ if check_password():
     def get_workflow_status():
         repo = st.secrets.get("repo_name", "").strip().strip("/")
         url = f"https://api.github.com/repos/{repo}/actions/runs?per_page=1"
-        resp = requests.get(url, headers=get_gh_headers())
-        if resp.status_code == 200:
-            runs = resp.json().get("workflow_runs", [])
-            if runs:
-                return runs[0]["status"], runs[0]["conclusion"]
+        try:
+            resp = requests.get(url, headers=get_gh_headers())
+            if resp.status_code == 200:
+                runs = resp.json().get("workflow_runs", [])
+                if runs:
+                    return runs[0]["status"], runs[0]["conclusion"]
+        except: pass
         return "unknown", None
 
     def trigger_workflow_with_monitor():
@@ -99,12 +101,10 @@ if check_password():
         resp = requests.post(url, headers=get_gh_headers(), json={"ref": "main"})
         
         if resp.status_code == 204:
-            # Ein Container, der sich selbst überschreibt
             status_placeholder = st.empty()
-            
             with status_placeholder.container():
                 st.info("🛰️ Verbindung zu GitHub hergestellt. Starte Abruf...")
-                time.sleep(5) # Puffer für GitHub-Registrierung
+                time.sleep(5)
                 
                 start_time = time.time()
                 status = "queued"
@@ -112,28 +112,29 @@ if check_password():
                 while status not in ["completed", "unknown"]:
                     status, conclusion = get_workflow_status()
                     elapsed = int(time.time() - start_time)
+                    mins, secs = divmod(elapsed, 60)
+                    time_str = f"{mins}m {secs}s"
                     
-                    # Wir überschreiben den Inhalt des Containers in jedem Durchlauf
                     with status_placeholder.container():
                         if status == "queued":
-                            st.warning(f"🕒 In Warteschlange... (Dauer: {elapsed}s)")
+                            st.warning(f"🕒 In Warteschlange... (Laufzeit: {time_str})")
                         elif status == "in_progress":
-                            st.info(f"⚙️ Daten werden aktuell abgerufen... (Dauer: {elapsed}s)")
+                            st.info(f"⚙️ Daten werden aktuell abgerufen... (Laufzeit: {time_str})")
                         
                         if status == "completed":
                             if conclusion == "success":
-                                st.success(f"✅ Fertig! Abruf nach {elapsed}s erfolgreich abgeschlossen.")
+                                st.success(f"✅ Fertig! Abruf nach {time_str} erfolgreich abgeschlossen.")
                                 time.sleep(3)
                                 st.rerun()
                             else:
                                 st.error(f"❌ Abbruch: GitHub meldet Fehler '{conclusion}'.")
                             break
                     
-                    if elapsed > 300: # 5 Min Sicherheits-Stop
-                        st.error("⏱️ Zeitüberschreitung. Bitte Status direkt auf GitHub prüfen.")
+                    if elapsed > 1200: # Zeitlimit auf 15 Minuten erhöht
+                        st.error(f"⏱️ Zeitüberschreitung nach {time_str}. Bitte Status direkt auf GitHub prüfen.")
                         break
                         
-                    time.sleep(8) # Check-Intervall
+                    time.sleep(15) # Schont API-Limits bei langen Läufen
         else:
             st.error(f"Fehler {resp.status_code}: Workflow konnte nicht gestartet werden.")
 
@@ -191,10 +192,9 @@ if check_password():
             search = st.text_input("🔍 Suche...")
         if st.button("🚪 Logout", use_container_width=True): st.session_state.password_correct = False; st.rerun()
 
-    # --- 5. HAUPTBEREICH (Beispielhaft gekürzt für Übersicht) ---
+    # --- 5. HAUPTBEREICH ---
     if admin_mode == "Feeds verwalten" and st.session_state.is_admin:
         st.header("📋 RSS-Feeds verwalten")
-        # ... (Dein Feed-Management-Code wie oben)
         with st.expander("➕ Neuen Feed hinzufügen"):
             with st.form("new_feed"):
                 f_name, f_url = st.text_input("Name"), st.text_input("URL")
@@ -204,6 +204,8 @@ if check_password():
                         new_row = pd.DataFrame([{"name": f_name, "url": f_url, "category": f_cat}])
                         st.session_state.feeds_df = pd.concat([st.session_state.feeds_df, new_row], ignore_index=True)
                         st.session_state.unsaved_changes = True; st.rerun()
+        
+        st.subheader("Aktive Feeds")
         for i, row in st.session_state.feeds_df.iterrows():
             c1, c2, c3, c4 = st.columns([0.3, 0.4, 0.2, 0.1])
             c1.write(f"**{row.get('name', '???')}**")
@@ -212,28 +214,29 @@ if check_password():
             if c4.button("🗑️", key=f"del_f_{i}"):
                 st.session_state.feeds_df = st.session_state.feeds_df.drop(i).reset_index(drop=True)
                 st.session_state.unsaved_changes = True; st.rerun()
+            st.divider()
 
     elif admin_mode == "Sperrliste" and st.session_state.is_admin:
         st.header("🗑️ Sperrliste")
-        # ... (Dein Sperrlisten-Code wie oben)
         for l in sorted(list(st.session_state.geloeschte_artikel)):
             c1, c2 = st.columns([0.8, 0.2]); c1.write(l)
             if c2.button("Wiederherstellen", key=f"rev_{l}"):
                 st.session_state.geloeschte_artikel.remove(l); st.session_state.unsaved_changes = True; st.rerun()
     else:
-        # Beiträge-Modus
         df_disp = st.session_state.all_news_df.copy()
         if not df_disp.empty:
             df_disp = df_disp[~df_disp['link'].isin(st.session_state.geloeschte_artikel)]
             if view == "⭐ Wichtig": df_disp = df_disp[df_disp['link'].isin(st.session_state.wichtige_artikel)]
             elif view != "Alle": df_disp = df_disp[df_disp['category'] == view]
             if search: df_disp = df_disp[df_disp['title'].str.contains(search, case=False, na=False)]
-        
         st.header(f"Beiträge: {view} ({len(df_disp)})")
         if not df_disp.empty and "source_name" in df_disp.columns:
             for q, group in df_disp.groupby("source_name"):
                 with st.expander(f"📂 {q} ({len(group)})", expanded=(st.session_state.get("active_folder") == q)):
-                    # ... (Beiträge anzeigen)
+                    if st.session_state.is_admin:
+                        if st.button(f"🗑️ Ordner leeren", key=f"bulk_{q}"):
+                            st.session_state.geloeschte_artikel.update(group['link'].tolist())
+                            st.session_state.unsaved_changes, st.session_state.active_folder = True, q; st.rerun()
                     for i, row in group.iterrows():
                         l, is_f = row['link'], row['link'] in st.session_state.wichtige_artikel
                         c1, c2, c3 = st.columns([0.8, 0.1, 0.1])
@@ -244,4 +247,5 @@ if check_password():
                                 st.session_state.unsaved_changes, st.session_state.active_folder = True, q; st.rerun()
                             if c3.button("🗑️", key=f"d_{q}_{i}"):
                                 st.session_state.geloeschte_artikel.add(l); st.session_state.unsaved_changes, st.session_state.active_folder = True, q; st.rerun()
+                        st.divider()
         else: st.info("Keine Einträge gefunden.")
