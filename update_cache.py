@@ -5,6 +5,7 @@ import base64
 import requests
 import os
 import time
+import random
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 
@@ -12,39 +13,41 @@ from concurrent.futures import ThreadPoolExecutor
 REPO = os.getenv("REPO_NAME")
 TOKEN = os.getenv("GH_TOKEN")
 
+
+
 def fetch_feed(row):
     url = str(row['url']).strip()
     name = str(row.get('name', 'Unbekannt'))
     encoded_target = requests.utils.quote(url)
     
-    # Verschiedene Wege zur WIPO
+    # AllOrigins nach hinten schieben, da aktuell unzuverlässig
     proxies = [
-        f"https://api.allorigins.win/get?url={encoded_target}",
         f"https://corsproxy.io/?{encoded_target}",
-        f"https://api.codetabs.com/v1/proxy?quest={encoded_target}"
+        f"https://api.codetabs.com/v1/proxy?quest={encoded_target}",
+        f"https://api.allorigins.win/get?url={encoded_target}"
     ]
     
-    # Wir geben jedem Proxy eine faire Chance, wechseln aber bei Fehlern sofort
+    # Verschiedene Browser simulieren
+    user_agents = [
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
+    ]
+
     for attempt, proxy_url in enumerate(proxies):
         try:
-            # Vor jedem Versuch kurz warten, um Rate-Limits zu umgehen
-            time.sleep(attempt * 5 + 2) 
+            # Wichtige Pause: Zwischen 3 und 8 Sekunden zufällig warten
+            time.sleep(random.uniform(3, 8))
             
-            headers = {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0 Safari/537.36"
-            }
+            headers = {"User-Agent": random.choice(user_agents)}
+            resp = requests.get(proxy_url, headers=headers, timeout=35)
             
-            resp = requests.get(proxy_url, headers=headers, timeout=30)
-            
-            # Falls der Proxy einen Serverfehler (5xx) meldet, versuchen wir sofort den nächsten Anbieter
             if resp.status_code != 200:
-                print(f"Versuch {attempt+1} ({name}): Proxy {attempt} meldet Status {resp.status_code} - wechsle Anbieter...")
+                print(f"Versuch {attempt+1} ({name}): Anbieter {attempt} meldet {resp.status_code}. Probiere nächsten...")
                 continue
 
-            # Content extrahieren (AllOrigins nutzt JSON-Kapselung, andere nicht)
             if "allorigins" in proxy_url:
-                data = resp.json()
-                content = data.get('contents', '')
+                content = resp.json().get('contents', '')
             else:
                 content = resp.text
 
@@ -55,7 +58,7 @@ def fetch_feed(row):
             if not feed.entries:
                 continue
 
-            # Wenn wir hier landen, war der Abruf erfolgreich!
+            # --- Erfolgreich extrahieren ---
             now = datetime.now()
             entries = []
             for e in feed.entries:
@@ -76,11 +79,10 @@ def fetch_feed(row):
                 })
             return entries
 
-        except Exception as e:
-            # Technischer Fehler beim Proxy-Aufruf
+        except Exception:
             continue
             
-    print(f"❌ Alle Proxies gescheitert für: {name}")
+    print(f"❌ Alle Versuche gescheitert für: {name}")
     return []
 
 def update_cache():
