@@ -6,6 +6,16 @@ import json
 import time
 import io
 from datetime import datetime, timedelta
+from PIL import Image
+
+# Icon laden
+icon_img = Image.open("logo.png")
+
+st.set_page_config(
+    page_title="IP RSS Database Manager",
+    page_icon=icon_img, # Hier wird das Bild-Objekt genutzt
+    layout="wide"
+)
 
 # --- 1. SETUP ---
 st.set_page_config(page_title="IP RSS Database Manager", layout="wide")
