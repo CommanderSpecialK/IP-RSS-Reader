@@ -4,7 +4,6 @@ import requests
 import base64
 import json
 import time
-from concurrent.futures import ThreadPoolExecutor
 
 # --- 1. SETUP ---
 st.set_page_config(page_title="IP RSS Database Manager", layout="wide")
@@ -52,38 +51,32 @@ if check_password():
         return resp.status_code
 
     def sync_and_cleanup():
-        """Bereinigt den Cache, behält aber die Löschliste als Schutzschild bei"""
         try:
             with st.spinner("Synchronisiere Daten..."):
                 df = st.session_state.all_news_df
                 geloescht_set = st.session_state.geloeschte_artikel
                 
-                # 1. Aus Cache entfernen (macht die DB klein und schnell)
                 if not df.empty and geloescht_set:
                     df_cleaned = df[~df['link'].isin(geloescht_set)]
                 else:
                     df_cleaned = df
 
-                # 2. Daten für Upload vorbereiten
                 new_cache_json = df_cleaned.to_dict(orient='records')
                 geloescht_content = "\n".join(sorted(list(geloescht_set)))
                 wichtig_content = "\n".join(sorted(list(st.session_state.wichtige_artikel)))
                 
-                # 3. Uploads durchführen
-                # Wir prüfen auf Status 200 (OK) oder 201 (Created)
                 res1 = upload_file("news_cache.json", json.dumps(new_cache_json, indent=2), "DB Cleanup")
                 res2 = upload_file("geloescht.txt", geloescht_content, "Update Delete List")
                 res3 = upload_file("wichtig.txt", wichtig_content, "Update Favorites")
 
-                success_codes = [200, 201]
-                if res1 in success_codes and res2 in success_codes and res3 in success_codes:
+                if res1 in [200, 201] and res2 in [200, 201] and res3 in [200, 201]:
                     st.session_state.all_news_df = df_cleaned
                     st.session_state.unsaved_changes = False
-                    st.success("✅ Synchronisiert! Cache bereinigt, Löschliste aktualisiert.")
+                    st.success("✅ Synchronisiert!")
                     time.sleep(1)
                     st.rerun()
                 else:
-                    st.error(f"GitHub Fehler: Cache({res1}), Liste({res2}), Favoriten({res3})")
+                    st.error(f"GitHub Fehler: {res1}, {res2}, {res3}")
         except Exception as e:
             st.error(f"Fehler: {e}")
 
@@ -103,38 +96,35 @@ if check_password():
                 st.session_state.all_news_df = pd.DataFrame()
                 
             st.session_state.unsaved_changes = False
-            st.session_state.expander_state = {}
+            st.session_state.active_folder = None # Merkt sich den aktuell offenen Ordner
 
     # --- 4. SIDEBAR ---
     with st.sidebar:
         st.title("📌 IP Manager")
         if st.session_state.unsaved_changes:
             st.warning("⚠️ Änderungen vorhanden")
-            if st.button("💾 BEREINIGEN & SPEICHERN", type="primary", use_container_width=True):
+            if st.button("💾 SPEICHERN", type="primary", use_container_width=True):
                 sync_and_cleanup()
         else:
-            st.success("☁️ DB ist synchron")
+            st.success("☁️ Synchron")
             
         st.divider()
         if st.button("📁 Alle zuklappen", use_container_width=True):
-            st.session_state.expander_state = {k: False for k in st.session_state.expander_state}
+            st.session_state.active_folder = None
             st.rerun()
             
-        if not st.session_state.all_news_df.empty and 'category' in st.session_state.all_news_df.columns:
-            # Holen der echten Kategorien aus der Datenbank (ohne EPO, wenn es dort gelöscht wurde)
+        if not st.session_state.all_news_df.empty:
             kats = sorted([str(k) for k in st.session_state.all_news_df['category'].unique() if k])
             options = ["Alle"] + kats + ["⭐ Wichtig"]
         else:
             options = ["Alle", "⭐ Wichtig"]
 
         view = st.radio("Ansicht filtern", options)
-
-        #view = st.radio("Ansicht", ["Alle", "EPO", "WIPO", "⭐ Wichtig"])
         search = st.text_input("🔍 Suche...")
 
     # --- 5. FILTERING ---
     df_display = st.session_state.all_news_df.copy()
-    if not df_display.empty and 'link' in df_display.columns:
+    if not df_display.empty:
         df_display = df_display[~df_display['link'].isin(st.session_state.geloeschte_artikel)]
         if view == "⭐ Wichtig":
             df_display = df_display[df_display['link'].isin(st.session_state.wichtige_artikel)]
@@ -147,30 +137,53 @@ if check_password():
     st.header(f"Beiträge: {view} ({len(df_display)})")
     if not df_display.empty:
         for q, group in df_display.groupby("source_name"):
-            with st.expander(f"📂 {q} ({len(group)})", expanded=st.session_state.expander_state.get(q, False)):
-                st.session_state.expander_state[q] = True
+            # Ein Ordner ist nur offen, wenn er aktiv gesetzt wurde
+            is_expanded = (st.session_state.active_folder == q)
+            
+            with st.expander(f"📂 {q} ({len(group)})", expanded=is_expanded):
+                
+                # --- Sicherheitsabfrage für Ordner leeren ---
+                col_btn, col_confirm = st.columns([0.3, 0.7])
+                
+                # State-Key für die Bestätigung dieses spezifischen Ordners
+                confirm_key = f"confirm_delete_{q}"
                 
                 if st.button(f"🗑️ Ordner leeren", key=f"bulk_{q}", use_container_width=True):
-                    st.session_state.geloeschte_artikel.update(group['link'].tolist())
-                    st.session_state.unsaved_changes = True
-                    st.rerun()
+                    st.session_state[confirm_key] = True
+
+                if st.session_state.get(confirm_key, False):
+                    st.warning("Wirklich alle Einträge in diesem Ordner löschen?")
+                    if st.button("✅ Ja, sicher!", key=f"yes_{q}", type="primary"):
+                        st.session_state.geloeschte_artikel.update(group['link'].tolist())
+                        st.session_state.unsaved_changes = True
+                        st.session_state.active_folder = q 
+                        st.session_state[confirm_key] = False
+                        st.rerun()
+                    if st.button("❌ Abbrechen", key=f"no_{q}"):
+                        st.session_state[confirm_key] = False
+                        st.rerun()
 
                 st.divider()
+                
+                # Einzelne Einträge
                 for i, row in group.iterrows():
                     link = row['link']
                     c1, c2, c3 = st.columns([0.8, 0.1, 0.1])
                     is_fav = link in st.session_state.wichtige_artikel
+                    
                     c1.markdown(f"{'⭐ ' if is_fav else ''}**[{row['title']}]({link})**")
                     
                     if c2.button("⭐", key=f"f_{q}_{i}"):
                         if is_fav: st.session_state.wichtige_artikel.remove(link)
                         else: st.session_state.wichtige_artikel.add(link)
                         st.session_state.unsaved_changes = True
+                        st.session_state.active_folder = q 
                         st.rerun()
                         
                     if c3.button("🗑️", key=f"d_{q}_{i}"):
                         st.session_state.geloeschte_artikel.add(link)
                         st.session_state.unsaved_changes = True
+                        st.session_state.active_folder = q 
                         st.rerun()
                     st.divider()
     else:
