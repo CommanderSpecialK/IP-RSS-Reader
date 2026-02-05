@@ -93,50 +93,84 @@ if check_password():
         except: pass
         return "unknown", None
 
-    def trigger_workflow_with_monitor():
-        repo = st.secrets.get("repo_name", "").strip().strip("/")
-        workflow_filename = "daily.yml" 
-        url = f"https://api.github.com/repos/{repo}/actions/workflows/{workflow_filename}/dispatches"
-        
-        resp = requests.post(url, headers=get_gh_headers(), json={"ref": "main"})
-        
-        if resp.status_code == 204:
-            status_placeholder = st.empty()
-            with status_placeholder.container():
-                st.info("🛰️ Verbindung zu GitHub hergestellt. Starte Abruf...")
+def trigger_workflow_with_monitor():
+    repo = st.secrets.get("repo_name", "").strip().strip("/")
+    workflow_filename = "daily.yml" 
+    headers = get_gh_headers()
+    
+    # 1. ID des aktuellsten Runs VOR dem Start abrufen
+    def get_latest_run_id():
+        url = f"https://api.github.com/repos/{repo}/actions/runs?per_page=1"
+        try:
+            r = requests.get(url, headers=headers)
+            if r.status_code == 200:
+                runs = r.json().get("workflow_runs", [])
+                return runs[0]["id"] if runs else None
+        except: return None
+        return None
+
+    last_run_id = get_latest_run_id()
+    
+    # 2. Workflow starten
+    url_trigger = f"https://api.github.com/repos/{repo}/actions/workflows/{workflow_filename}/dispatches"
+    resp = requests.post(url_trigger, headers=headers, json={"ref": "main"})
+    
+    if resp.status_code == 204:
+        status_placeholder = st.empty()
+        with status_placeholder.container():
+            st.info("🛰️ Signal gesendet. Warte auf GitHub-Bestätigung...")
+            
+            start_time = time.time()
+            new_run_id = None
+            
+            # 3. Warten, bis ein NEUER Run erscheint (maximal 60s warten)
+            for _ in range(12): 
                 time.sleep(5)
+                current_id = get_latest_run_id()
+                if current_id and current_id != last_run_id:
+                    new_run_id = current_id
+                    break
+            
+            if not new_run_id:
+                st.warning("Der Workflow wurde gestartet, aber GitHub braucht ungewöhnlich lange zum Antworten. Bitte Seite in 5 Min manuell laden.")
+                return
+
+            # 4. Den neuen Run überwachen
+            status = "queued"
+            while status not in ["completed", "unknown"]:
+                # Status des SPECIFIC runs abrufen
+                url_status = f"https://api.github.com/repos/{repo}/actions/runs/{new_run_id}"
+                r = requests.get(url_status, headers=headers)
+                if r.status_code == 200:
+                    data = r.json()
+                    status = data.get("status")
+                    conclusion = data.get("conclusion")
                 
-                start_time = time.time()
-                status = "queued"
+                elapsed = int(time.time() - start_time)
+                mins, secs = divmod(elapsed, 60)
+                time_str = f"{mins}m {secs}s"
                 
-                while status not in ["completed", "unknown"]:
-                    status, conclusion = get_workflow_status()
-                    elapsed = int(time.time() - start_time)
-                    mins, secs = divmod(elapsed, 60)
-                    time_str = f"{mins}m {secs}s"
+                with status_placeholder.container():
+                    if status == "queued":
+                        st.warning(f"🕒 In Warteschlange... (Laufzeit: {time_str})")
+                    elif status == "in_progress":
+                        st.info(f"⚙️ Daten werden aktuell abgerufen... (Laufzeit: {time_str})")
                     
-                    with status_placeholder.container():
-                        if status == "queued":
-                            st.warning(f"🕒 In Warteschlange... (Laufzeit: {time_str})")
-                        elif status == "in_progress":
-                            st.info(f"⚙️ Daten werden aktuell abgerufen... (Laufzeit: {time_str})")
-                        
-                        if status == "completed":
-                            if conclusion == "success":
-                                st.success(f"✅ Fertig! Abruf nach {time_str} erfolgreich abgeschlossen.")
-                                time.sleep(3)
-                                st.rerun()
-                            else:
-                                st.error(f"❌ Abbruch: GitHub meldet Fehler '{conclusion}'.")
-                            break
-                    
-                    if elapsed > 1200: # Zeitlimit auf 15 Minuten erhöht
-                        st.error(f"⏱️ Zeitüberschreitung nach {time_str}. Bitte Status direkt auf GitHub prüfen.")
+                    if status == "completed":
+                        if conclusion == "success":
+                            st.success(f"✅ Fertig! Abruf nach {time_str} erfolgreich.")
+                            time.sleep(5)
+                            st.rerun()
+                        else:
+                            st.error(f"❌ GitHub Fehler: {conclusion}")
                         break
-                        
-                    time.sleep(15) # Schont API-Limits bei langen Läufen
-        else:
-            st.error(f"Fehler {resp.status_code}: Workflow konnte nicht gestartet werden.")
+                
+                if elapsed > 1200: # 20 Min Timeout
+                    st.error("⏱️ Zeitüberschreitung.")
+                    break
+                time.sleep(15)
+    else:
+        st.error(f"Fehler {resp.status_code}: Start fehlgeschlagen.")
 
     def sync_all():
         with st.spinner("Synchronisiere..."):
