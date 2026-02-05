@@ -135,7 +135,7 @@ if check_password():
 
     # --- 4. SIDEBAR ---
     with st.sidebar:
-        status_text = "🔓 ADMIN MODUS" if st.session_state.is_admin else "👤 LESER MODUS"
+        status_text = "🔓 ADMIN MODUS" if st.session_state.is_admin else "👤 USER MODUS"
         st.title(status_text)
         
         if st.session_state.is_admin and st.session_state.unsaved_changes:
