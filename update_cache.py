@@ -15,47 +15,66 @@ TOKEN = os.getenv("GH_TOKEN")
 def fetch_feed(row):
     url = str(row['url']).strip()
     name = str(row.get('name', 'Unbekannt'))
+    encoded_target = requests.utils.quote(url)
     
-    # VERSUCH 1: Direkt abrufen (oft stabiler als über Proxy)
-    # VERSUCH 2 & 3: Falls nötig, über Proxy
+    # Liste von Proxy-Diensten zum Durchrotieren
+    proxies = [
+        f"https://api.allorigins.win/get?url={encoded_target}",
+        f"https://corsproxy.io/?{encoded_target}"
+    ]
     
-    for attempt in range(4): # Erhöht auf 4 Versuche
+    for attempt in range(len(proxies) * 2): # Versucht jeden Proxy zweimal
+        proxy_url = proxies[attempt % len(proxies)]
+        
         try:
-            # Exponential Backoff: Wartet 2s, 5s, 10s...
+            # Wartezeit zwischen den Versuchen erhöhen (2s, 4s, 6s...)
             if attempt > 0:
-                wait_time = attempt * 5 
-                time.sleep(wait_time)
+                time.sleep(attempt * 2)
             
-            # Beim ersten Versuch direkt probieren, danach erst Proxy nutzen
-            if attempt == 0:
-                current_url = url
-            else:
-                encoded_target = requests.utils.quote(url)
-                current_url = f"https://api.allorigins.win/get?url={encoded_target}"
-
-            resp = requests.get(current_url, timeout=30)
+            resp = requests.get(proxy_url, timeout=30)
             
             if resp.status_code == 200:
-                # Prüfen, ob wir Daten direkt oder vom Proxy haben
-                if attempt == 0:
-                    feed_raw_content = resp.text
-                else:
-                    feed_raw_content = resp.json().get('contents')
-
+                data = resp.json()
+                # AllOrigins liefert 'contents', CORSProxy liefert oft direkt den Text
+                feed_raw_content = data.get('contents') if isinstance(data, dict) else resp.text
+                
                 if not feed_raw_content:
                     continue
 
                 feed = feedparser.parse(feed_raw_content)
-                # ... (Rest deiner Logik wie bisher)
-                return entries 
-
-            elif resp.status_code in [429, 500, 502, 503, 504, 520, 522]:
-                print(f"Versuch {attempt+1} für {name}: Server-Fehler {resp.status_code}")
                 
-        except Exception as e:
-            print(f"Versuch {attempt+1} für {name}: Technischer Fehler {str(e)[:50]}")
+                # Check ob der Feed überhaupt Einträge hat
+                if not feed.entries:
+                    print(f"Versuch {attempt+1}: Feed für {name} leer (WIPO Block?)")
+                    continue
+
+                now = datetime.now()
+                entries = []
+                for e in feed.entries:
+                    pub_parsed = e.get('published_parsed')
+                    is_new = False
+                    if pub_parsed:
+                        dt_pub = datetime(*pub_parsed[:6])
+                        is_new = (now - dt_pub).total_seconds() < 172800
+                    
+                    entries.append({
+                        'title': e.get('title', 'Kein Titel'),
+                        'link': e.get('link', '#'),
+                        'source_name': name,
+                        'category': str(row.get('category', 'WIPO')),
+                        'is_new': is_new,
+                        'published': e.get('published', 'Unbekannt'),
+                        'pub_sort': list(pub_parsed) if pub_parsed else [1970, 1, 1, 0, 0, 0, 0, 0, 0]
+                    })
+                return entries
             
-    print(f"❌ Endgültig gescheitert: {name}")
+            else:
+                print(f"Versuch {attempt+1} Proxy-Fehler {resp.status_code} für {name}")
+
+        except Exception as e:
+            print(f"Versuch {attempt+1} technischer Fehler für {name}: {str(e)[:50]}")
+            
+    print(f"❌ Endgültig gescheitert nach allen Proxies: {name}")
     return []
 
 def update_cache():
