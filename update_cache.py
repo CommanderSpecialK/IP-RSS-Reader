@@ -17,88 +17,70 @@ def fetch_feed(row):
     name = str(row.get('name', 'Unbekannt'))
     encoded_target = requests.utils.quote(url)
     
-    # Echte Browser-Header, um Blockaden zu umgehen
-    custom_headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-        "Referer": "https://patentscope.wipo.int/"
-    }
-
+    # Verschiedene Wege zur WIPO
     proxies = [
         f"https://api.allorigins.win/get?url={encoded_target}",
         f"https://corsproxy.io/?{encoded_target}",
         f"https://api.codetabs.com/v1/proxy?quest={encoded_target}"
     ]
     
-    # Wir versuchen es etwas hartnäckiger
-    for attempt in range(len(proxies)):
-        proxy_url = proxies[attempt]
+    # Wir geben jedem Proxy eine faire Chance, wechseln aber bei Fehlern sofort
+    for attempt, proxy_url in enumerate(proxies):
         try:
-            # Erhöhte Wartezeit: WIPO braucht Zeit zum "Abkühlen"
-            if attempt > 0:
-                time.sleep(10) # 10 Sekunden Pause vor dem nächsten Proxy
+            # Vor jedem Versuch kurz warten, um Rate-Limits zu umgehen
+            time.sleep(attempt * 5 + 2) 
             
-            # Wir senden die Header an den Proxy (manche Proxies leiten diese weiter)
-            resp = requests.get(proxy_url, headers=custom_headers, timeout=40)
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0 Safari/537.36"
+            }
             
-            if resp.status_code == 200:
-                content = ""
-                if "allorigins" in proxy_url:
-                    try:
-                        content = resp.json().get('contents', '')
-                    except: continue
-                else:
-                    content = resp.text
-
-                if not content or len(content) < 150:
-                    continue
-
-                feed = feedparser.parse(content)
-                if not feed.entries:
-                    # Manchmal schickt WIPO eine leere Seite bei Blockade
-                    continue
-
-                now = datetime.now()
-                entries = []
-                for e in feed.entries:
-                    pub_parsed = e.get('published_parsed')
-                    is_new = False
-                    if pub_parsed:
-                        dt_pub = datetime(*pub_parsed[:6])
-                        is_new = (now - dt_pub).total_seconds() < 172800
-                    
-                    entries.append({
-                        'title': e.get('title', 'Kein Titel'),
-                        'link': e.get('link', '#'),
-                        'source_name': name,
-                        'category': str(row.get('category', 'WIPO')),
-                        'is_new': is_new,
-                        'published': e.get('published', 'Unbekannt'),
-                        'pub_sort': list(pub_parsed) if pub_parsed else [1970, 1, 1, 0, 0, 0, 0, 0, 0]
-                    })
-                return entries
+            resp = requests.get(proxy_url, headers=headers, timeout=30)
             
+            # Falls der Proxy einen Serverfehler (5xx) meldet, versuchen wir sofort den nächsten Anbieter
+            if resp.status_code != 200:
+                print(f"Versuch {attempt+1} ({name}): Proxy {attempt} meldet Status {resp.status_code} - wechsle Anbieter...")
+                continue
+
+            # Content extrahieren (AllOrigins nutzt JSON-Kapselung, andere nicht)
+            if "allorigins" in proxy_url:
+                data = resp.json()
+                content = data.get('contents', '')
             else:
-                # Logge den Fehler, aber mache weiter
-                if resp.status_code != 404:
-                    print(f"Versuch {attempt+1} ({name}): Proxy {attempt} meldet {resp.status_code}")
+                content = resp.text
 
-        except Exception:
+            if not content or len(content) < 200:
+                continue
+
+            feed = feedparser.parse(content)
+            if not feed.entries:
+                continue
+
+            # Wenn wir hier landen, war der Abruf erfolgreich!
+            now = datetime.now()
+            entries = []
+            for e in feed.entries:
+                pub_parsed = e.get('published_parsed')
+                is_new = False
+                if pub_parsed:
+                    dt_pub = datetime(*pub_parsed[:6])
+                    is_new = (now - dt_pub).total_seconds() < 172800
+                
+                entries.append({
+                    'title': e.get('title', 'Kein Titel'),
+                    'link': e.get('link', '#'),
+                    'source_name': name,
+                    'category': str(row.get('category', 'WIPO')),
+                    'is_new': is_new,
+                    'published': e.get('published', 'Unbekannt'),
+                    'pub_sort': list(pub_parsed) if pub_parsed else [1970, 1, 1, 0, 0, 0, 0, 0, 0]
+                })
+            return entries
+
+        except Exception as e:
+            # Technischer Fehler beim Proxy-Aufruf
             continue
             
-    # Falls alle Proxies scheitern: Letzter verzweifelter Versuch OHNE Proxy
-    # Manchmal lässt WIPO GitHub-Server doch durch, wenn die Proxies überlastet sind
-    try:
-        resp = requests.get(url, headers=custom_headers, timeout=20)
-        if resp.status_code == 200:
-            feed = feedparser.parse(resp.text)
-            if feed.entries:
-                # Logik für Erfolg ohne Proxy... (analog zu oben)
-                return [{"title": e.get('title'), "link": e.get('link'), "source_name": name, "category": "WIPO", "is_new": True} for e in feed.entries[:5]]
-    except:
-        pass
-
-    print(f"❌ Endgültig gescheitert: {name}")
+    print(f"❌ Alle Proxies gescheitert für: {name}")
     return []
 
 def update_cache():
