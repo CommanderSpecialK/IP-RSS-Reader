@@ -1,7 +1,7 @@
 name: Refresh News Cache
 on:
   schedule:
-    - cron: '17 1 * * 5'  # Beispiel für eine krumme Uhrzeit
+    - cron: '17 0 * * 5'  # Beispiel für eine krumme Uhrzeit
   workflow_dispatch:      # Ermöglicht manuelles Starten
 
 jobs:
